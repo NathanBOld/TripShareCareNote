@@ -570,6 +570,13 @@
                     <p class="text-[11px] text-slate-600">
                         ระบบจะบีบอัดข้อมูลทริปทั้งหมดไว้ใน <strong>ลิงก์ URL</strong> หรือ <strong>โค้ดข้อความสั้นๆ</strong> ส่งเข้าแชท LINE ให้เพื่อนก๊อปปี้มาวางช่องด้านล่างเพื่อเปิดดูทริปได้ทันทีแม้เปิดจากคนละเว็บ
                     </p>
+                    <div class="bg-white p-2.5 rounded-xl border border-violet-200 space-y-1.5">
+                        <label class="block text-[10px] font-semibold text-slate-600">URL เว็บไซต์หลักของคุณ (สำหรับสร้างลิงก์แชร์):</label>
+                        <input type="text" id="customPublicBaseUrlInput"
+                            value="https://nathanbold.github.io/TripShareCareNote/"
+                            placeholder="เช่น https://nathanbold.github.io/TripShareCareNote/"
+                            class="w-full px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono text-indigo-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="copyShareableUrlLink()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium text-[11px] flex items-center gap-1.5 shadow-2xs">
                             <i class="fa-solid fa-link"></i> คัดลอกลิงก์ URL ที่มีข้อมูลทริปในตัว
@@ -579,9 +586,9 @@
                         </button>
                     </div>
                     <div class="pt-1">
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">วาง "โค้ดข้อมูลทริป" หรือลิงก์ที่เพื่อนส่งมาที่นี่:</label>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">วาง "ลิงก์ URL" หรือ "โค้ดข้อมูลทริป" ที่เพื่อนส่งมาที่นี่:</label>
                         <div class="flex gap-1.5">
-                            <input type="text" id="pastePortableTokenInput" placeholder="วางโค้ด TRIPDATA:... หรือลิงก์ URL ที่นี่แล้วกดโหลด"
+                            <input type="text" id="pastePortableTokenInput" placeholder="วางลิงก์ https://...#trip=... หรือโค้ด TRIPDATA:... ที่นี่"
                                 class="flex-1 px-2.5 py-1.5 rounded-lg bg-white border border-violet-200 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500">
                             <button onclick="loadFromPortableTripToken()" class="px-3 py-1.5 rounded-lg bg-violet-700 hover:bg-violet-800 text-white font-medium text-[11px] shrink-0">
                                 โหลดโค้ดทริป
@@ -1396,13 +1403,21 @@
 
         function decodeTripFromBase64Token(tokenStr) {
             let clean = String(tokenStr || '').trim();
+            try {
+                clean = decodeURIComponent(clean);
+            } catch (e) {}
+
             if (clean.includes('#trip=')) {
-                clean = clean.split('#trip=')[1].split('&')[0];
+                clean = clean.split('#trip=')[1].split('&')[0].split('#')[0];
+            } else if (clean.includes('?trip=')) {
+                clean = clean.split('?trip=')[1].split('&')[0].split('#')[0];
             } else if (clean.startsWith('TRIPDATA:')) {
                 clean = clean.replace('TRIPDATA:', '').trim();
             }
-            clean = clean.replace(/-/g, '+').replace(/_/g, '/');
+
+            clean = clean.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
             while (clean.length % 4 !== 0) clean += '=';
+
             const binary = atob(clean);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -1412,12 +1427,39 @@
             return JSON.parse(jsonStr);
         }
 
+        function getEffectiveShareBaseUrl() {
+            const customInput = document.getElementById('customPublicBaseUrlInput');
+            const customUrl = customInput ? customInput.value.trim() : '';
+            const currentHref = (window.location.href || '').split('#')[0].split('?')[0];
+
+            // If running inside an iframe preview (about:srcdoc / blob / googleusercontent), use the user's GitHub Pages URL
+            if (
+                !currentHref ||
+                currentHref.startsWith('about:') ||
+                currentHref.startsWith('blob:') ||
+                currentHref.includes('scf.usercontent.goog') ||
+                currentHref.includes('googleusercontent.com')
+            ) {
+                return customUrl || 'https://nathanbold.github.io/TripShareCareNote/';
+            }
+            return currentHref;
+        }
+
         function openShareDeployModal() {
             if (!appState.shareRoomCode) {
                 appState.shareRoomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
             }
             const codeEl = document.getElementById('publicShareCodeDisplay');
             if (codeEl) codeEl.value = appState.shareRoomCode;
+
+            const baseInput = document.getElementById('customPublicBaseUrlInput');
+            if (baseInput) {
+                const currentHref = (window.location.href || '').split('#')[0].split('?')[0];
+                if (currentHref && currentHref.startsWith('http') && !currentHref.includes('googleusercontent.com') && !currentHref.includes('usercontent.goog')) {
+                    baseInput.value = currentHref;
+                }
+            }
+
             const modal = document.getElementById('shareDeployModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1490,7 +1532,7 @@
             try {
                 const payload = buildCompactSharePayload();
                 const token = encodeTripToBase64Token(payload);
-                const baseUrl = window.location.href.split('#')[0];
+                const baseUrl = getEffectiveShareBaseUrl();
                 const shareUrl = `${baseUrl}#trip=${token}`;
                 try {
                     window.history.replaceState(null, '', `#trip=${token}`);
@@ -1534,8 +1576,10 @@
         function checkUrlHashForSharedTrip() {
             try {
                 const hash = window.location.hash || '';
-                if (hash.startsWith('#trip=')) {
-                    const decoded = decodeTripFromBase64Token(hash);
+                const search = window.location.search || '';
+                const targetSource = hash.includes('trip=') ? hash : (search.includes('trip=') ? search : '');
+                if (targetSource) {
+                    const decoded = decodeTripFromBase64Token(targetSource);
                     if (decoded && Array.isArray(decoded.members)) {
                         applyImportedTripObject(decoded);
                         showToast(`เปิดทริป "${appState.tripName}" จากลิงก์ที่แชร์เรียบร้อยแล้ว!`);
@@ -1894,115 +1938,93 @@
                     window.history.replaceState(null, '', window.location.pathname + window.location.search);
                 } catch (e) {}
             }
-            appState.currentTripId = 'trip_demo_1';
-            appState.tripName = 'ทริปครอบครัวพูลวิลล่าหัวหิน';
+            appState.currentTripId = 'trip_1793530404096';
+            appState.shareRoomCode = 'TRIP-6152';
+            appState.tripName = 'ทริปเขาใหญ่พูลวิลล่า';
+            appState.autoFamilySponsorRule = true;
             appState.roleRates = {
                 adult:  { foodPct: 100, stayPct: 100 },
                 child:  { foodPct: 50,  stayPct: 40 },
                 senior: { foodPct: 80,  stayPct: 80 }
             };
-            appState.baseFoodExpense = 7200;
-            appState.baseFoodPayerId = 'm1'; // พ่อเอกสำรองจ่ายค่าอาหารหลัก
-            appState.baseStayExpense = 10800;
-            appState.baseStayPayerId = 'm5'; // น้าบอยสำรองจ่ายค่าที่พักหลัก
+            appState.baseFoodExpense = 0;
+            appState.baseFoodPayerId = '';
+            appState.baseStayExpense = 10000;
+            appState.baseStayPayerId = 'm_1793530433376_23'; // หลิน สำรองจ่ายค่าที่พัก 10,000 บาท
 
-            appState.subExpenses = [
-                { id: 'sub1', type: 'food', title: 'ซีฟู้ดมื้อค่ำริมทะเล', amount: 2400, payerId: 'm2' },
-                { id: 'sub2', type: 'stay', title: 'เตียงเสริมพูลวิลล่า', amount: 1200, payerId: 'm5' }
-            ];
+            appState.subExpenses = [];
 
             appState.families = [
-                { id: 'fam_a', name: 'บ้านพ่อเอก', color: 'indigo' },
-                { id: 'fam_b', name: 'บ้านน้าบอย', color: 'emerald' },
-                { id: 'fam_c', name: 'เพื่อนโสด', color: 'rose' }
+                { id: 'fam_1793528892784', name: 'บ้านบุราสิริ', color: 'indigo' },
+                { id: 'fam_1793528908862', name: 'แก๊งเจนซี', color: 'emerald' }
             ];
 
-            // Compact coordinates suitable for both mobile and desktop
+            // ข้อมูลสมาชิกจากลิงก์ URL ของผู้ใช้ (หลิน, เหมย, เอก ดูแล ป๊า, ม้า ในบ้านบุราสิริ)
             appState.members = [
                 {
-                    id: 'm1',
-                    name: 'พ่อเอก',
+                    id: 'm_1793530433376_23',
+                    name: 'หลิน',
                     role: 'adult',
-                    familyId: 'fam_a',
+                    familyId: 'fam_1793528892784',
                     foodPct: 100,
                     stayPct: 100,
                     sponsorIds: [],
                     manualAdvance: 0,
+                    collapsed: false,
                     x: 20,
                     y: 42
                 },
                 {
-                    id: 'm2',
-                    name: 'แม่นิด',
+                    id: 'm_1793530438120_91',
+                    name: 'เหมย',
                     role: 'adult',
-                    familyId: 'fam_a',
+                    familyId: 'fam_1793528892784',
                     foodPct: 100,
                     stayPct: 100,
                     sponsorIds: [],
                     manualAdvance: 0,
+                    collapsed: false,
                     x: 200,
                     y: 42
                 },
                 {
-                    id: 'm3',
-                    name: 'น้องปันปัน',
-                    role: 'child',
-                    familyId: 'fam_a',
-                    foodPct: 50,
-                    stayPct: 40,
-                    sponsorIds: ['m1', 'm2'],
+                    id: 'm_1793530440443_77',
+                    name: 'เอก',
+                    role: 'adult',
+                    familyId: 'fam_1793528892784',
+                    foodPct: 100,
+                    stayPct: 100,
+                    sponsorIds: [],
                     manualAdvance: 0,
-                    x: 20,
-                    y: 235
+                    collapsed: false,
+                    x: 380,
+                    y: 42
                 },
                 {
-                    id: 'm4',
-                    name: 'อากงสมศักดิ์',
+                    id: 'm_1793530470025_64',
+                    name: 'ป๊า',
                     role: 'senior',
-                    familyId: 'fam_a',
+                    familyId: 'fam_1793528892784',
                     foodPct: 80,
                     stayPct: 80,
-                    sponsorIds: ['m1', 'm2', 'm5'],
+                    sponsorIds: ['m_1793530433376_23', 'm_1793530438120_91', 'm_1793530440443_77'],
                     manualAdvance: 0,
-                    x: 200,
-                    y: 235
-                },
-                {
-                    id: 'm5',
-                    name: 'น้าบอย',
-                    role: 'adult',
-                    familyId: 'fam_b',
-                    foodPct: 100,
-                    stayPct: 100,
-                    sponsorIds: [],
-                    manualAdvance: 0,
-                    x: 405,
-                    y: 42
-                },
-                {
-                    id: 'm6',
-                    name: 'น้องโมจิ',
-                    role: 'child',
-                    familyId: 'fam_b',
-                    foodPct: 50,
-                    stayPct: 40,
-                    sponsorIds: ['m5'],
-                    manualAdvance: 0,
-                    x: 405,
-                    y: 235
-                },
-                {
-                    id: 'm7',
-                    name: 'พี่เจต',
-                    role: 'adult',
-                    familyId: 'fam_c',
-                    foodPct: 100,
-                    stayPct: 100,
-                    sponsorIds: [],
-                    manualAdvance: 500,
                     collapsed: false,
-                    x: 605,
-                    y: 42
+                    x: 20,
+                    y: 232
+                },
+                {
+                    id: 'm_1793530475878_47',
+                    name: 'ม้า',
+                    role: 'senior',
+                    familyId: 'fam_1793528892784',
+                    foodPct: 80,
+                    stayPct: 80,
+                    sponsorIds: ['m_1793530433376_23', 'm_1793530438120_91', 'm_1793530440443_77'],
+                    manualAdvance: 0,
+                    collapsed: false,
+                    x: 200,
+                    y: 232
                 }
             ];
 
@@ -2022,7 +2044,7 @@
             }
 
             if (!isInitial) {
-                showToast('โหลดข้อมูลตัวอย่างเรียบร้อยแล้ว');
+                showToast('โหลดข้อมูลทริปเขาใหญ่พูลวิลล่าเรียบร้อยแล้ว');
             }
         }
 
