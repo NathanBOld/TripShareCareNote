@@ -117,24 +117,20 @@
             <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-0.5 sm:pb-0 no-scrollbar">
                 <button onclick="openShareDeployModal()" class="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0">
                     <i class="fa-solid fa-share-nodes"></i>
-                    <span>แชร์ทริป / นำแอปไปใช้</span>
+                    <span>แชร์ทริปให้เพื่อน</span>
                 </button>
-                <button onclick="saveTripToGoogleSheet()" id="saveCloudBtn" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0">
-                    <i class="fa-solid fa-table"></i>
-                    <span>บันทึกเข้า Google Sheet</span>
+                <button onclick="saveTripToCloud()" id="saveCloudBtn" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>บันทึกทริป</span>
                 </button>
                 <button onclick="openSavedTripsModal()" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-medium transition flex items-center gap-1.5 border border-emerald-200 shrink-0">
                     <i class="fa-solid fa-folder-open text-emerald-600"></i>
-                    <span>โหลดทริป / ตั้งค่า Sheet</span>
+                    <span>ทริปที่บันทึกไว้</span>
                     <span id="savedTripsCountBadge" class="px-1.5 py-0.2 bg-emerald-600 text-white rounded-full text-[10px]">0</span>
                 </button>
                 <button onclick="openDatabaseViewerModal()" class="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition flex items-center gap-1.5 border border-indigo-200 shrink-0" title="เปิดดูข้อมูลในฐานข้อมูลทั้งหมด">
                     <i class="fa-solid fa-database text-indigo-600"></i>
-                    <span>ดูฐานข้อมูล (DB)</span>
-                </button>
-                <button onclick="exportTripToCSV()" class="px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-medium transition flex items-center gap-1.5 border border-teal-200 shrink-0" title="ดาวน์โหลดไฟล์ CSV ไปเปิดใน Google Sheets / Excel">
-                    <i class="fa-solid fa-file-csv"></i>
-                    <span class="hidden md:inline">ส่งออก CSV</span>
+                    <span class="hidden sm:inline">ดูฐานข้อมูล (DB)</span>
                 </button>
                 <button onclick="openFamilyModal()" class="px-2.5 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition flex items-center gap-1.5 border border-violet-200 shrink-0">
                     <i class="fa-solid fa-people-roof text-violet-600"></i>
@@ -218,6 +214,14 @@
                     <button onclick="addPersonFromInput()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-medium text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-plus"></i> สร้างการ์ดเข้าสู่กระดาน
                     </button>
+
+                    <!-- Default Auto-Link Family Rule Toggle -->
+                    <label class="flex items-start gap-2 pt-1.5 border-t border-slate-100 cursor-pointer select-none">
+                        <input type="checkbox" id="autoFamilySponsorToggle" checked onchange="handleAutoFamilyRuleToggle(this.checked)" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-[10px] text-slate-600 leading-tight">
+                            <strong class="text-indigo-700">ตั้งค่าเริ่มต้นอัตโนมัติ:</strong> หากเป็น <span class="text-emerald-700 font-medium">เด็ก/ผู้สูงอายุ</span> ให้ผู้ใหญ่ในแก๊ง/บ้านเดียวกันหารออกค่าใช้จ่ายให้ทันที
+                        </span>
+                    </label>
                 </div>
             </div>
 
@@ -323,6 +327,9 @@
                         <!-- Mobile Quick Actions inside Board -->
                         <button onclick="switchMobileView('manage')" class="lg:hidden px-2 py-1 rounded-lg bg-indigo-600 text-white text-[11px] font-medium flex items-center gap-1">
                             <i class="fa-solid fa-user-plus"></i> +คน/บิล
+                        </button>
+                        <button onclick="toggleAllCardsCollapse()" id="toggleAllCardsBtn" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] font-medium flex items-center gap-1" title="ย่อหรือขยายการ์ดทั้งหมดบนกระดาน">
+                            <i class="fa-solid fa-compress"></i> <span>ย่อการ์ดทั้งหมด</span>
                         </button>
                         <button onclick="autoArrangeByFamily()" class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
                             <i class="fa-solid fa-table-cells-large"></i> จัดเรียง
@@ -457,12 +464,12 @@
         </button>
     </nav>
 
-    <!-- Modal: Google Sheets Sync & Saved Trips -->
+    <!-- Modal: Saved Trips in Cloud Database -->
     <div id="savedTripsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-3 md:p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-4 md:p-5 shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3 shrink-0">
                 <h3 class="font-bold text-sm md:text-base text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-file-Spreadsheet text-emerald-600"></i> จัดการข้อมูล Google Sheets & ทริปที่บันทึกไว้
+                    <i class="fa-solid fa-folder-open text-emerald-600"></i> ทริปที่บันทึกไว้ในฐานข้อมูล (Cloud DB)
                 </h3>
                 <button onclick="closeSavedTripsModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
@@ -470,57 +477,10 @@
             </div>
 
             <div class="overflow-y-auto pr-1 space-y-3 flex-1">
-                <!-- Google Apps Script Web App URL Configuration -->
-                <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                            <i class="fa-solid fa-link text-emerald-600"></i> ลิงก์ Google Sheet (Apps Script Web App URL)
-                        </label>
-                        <button type="button" onclick="toggleGasGuide()" class="text-[11px] text-emerald-700 hover:underline font-semibold flex items-center gap-1">
-                            <i class="fa-solid fa-circle-question"></i> วิธีเชื่อม Google Sheet (1 นาที)
-                        </button>
-                    </div>
-
-                    <div class="flex gap-1.5">
-                        <input type="url" id="gasWebhookUrlInput"
-                            placeholder="วาง URL https://script.google.com/macros/s/.../exec ที่นี่"
-                            class="flex-1 px-2.5 py-1.5 text-xs bg-white rounded-lg border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <button onclick="saveGasWebhookUrl()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shrink-0">
-                            ผูก Sheet
-                        </button>
-                        <button onclick="fetchTripsFromGoogleSheet()" id="syncSheetBtn" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-medium shrink-0" title="ดึงข้อมูลล่าสุดจาก Google Sheet">
-                            <i class="fa-solid fa-arrows-rotate"></i>
-                        </button>
-                    </div>
-                    <p id="sheetConnectionStatus" class="text-[10px] text-emerald-700">
-                        💡 เมื่อผูก URL แล้ว การกดปุ่ม "บันทึกเข้า Google Sheet" จะสร้างทั้งตารางสรุปรายคนและเก็บข้อมูลทริปลงใน Sheet ของคุณโดยตรง
-                    </p>
-
-                    <!-- Collapsible Setup Instructions & Copyable Apps Script Code -->
-                    <div id="gasGuideBox" class="hidden pt-2 border-t border-emerald-200/80 text-[11px] text-slate-700 space-y-2">
-                        <ol class="list-decimal list-inside space-y-1 text-slate-600">
-                            <li>สร้างไฟล์ <strong>Google Sheet</strong> ใหม่ แล้วไปที่เมนู <strong>ส่วนขยาย (Extensions) &gt; Apps Script</strong></li>
-                            <li>ลบโค้ดเดิมออก แล้วกดปุ่ม <strong>"คัดลอกโค้ด Apps Script"</strong> ด้านล่างไปวางแทนที่</li>
-                            <li>กดปุ่ม <strong>การทำให้ใช้งานได้ (Deploy) &gt; การทำให้ใช้งานได้รายการใหม่ (New deployment)</strong></li>
-                            <li>เลือกประเภทเป็น <strong>เว็บแอป (Web app)</strong> ตั้งค่าผู้มีสิทธิ์เข้าถึงเป็น <strong>"ทุกคน (Anyone)"</strong> แล้วกด Deploy</li>
-                            <li>คัดลอก <strong>Web App URL</strong> ที่ได้ มาวางในช่องด้านบนแล้วกด <strong>"ผูก Sheet"</strong></li>
-                        </ol>
-                        <div class="flex items-center justify-between bg-slate-900 text-slate-100 px-3 py-2 rounded-lg">
-                            <span class="text-[10px] text-emerald-300 font-mono truncate">Code.gs (สร้างตารางสรุปรายคน + บันทึกฐานข้อมูลทริป)</span>
-                            <button type="button" onclick="copyGoogleAppsScriptCode()" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-medium shrink-0 flex items-center gap-1">
-                                <i class="fa-regular fa-copy"></i> คัดลอกโค้ด Apps Script
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Actions Bar -->
-                <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-                    <span class="text-xs font-semibold text-slate-700">รายการทริปที่บันทึกไว้</span>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs font-semibold text-slate-700">เลือกรายการทริปเพื่อโหลดกลับมาแก้ไข</span>
                     <div class="flex items-center gap-1.5">
-                        <button onclick="exportTripToCSV()" class="px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 text-xs font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-file-csv"></i> ดาวน์โหลด CSV
-                        </button>
                         <button onclick="createNewBlankTrip()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1">
                             <i class="fa-solid fa-plus"></i> สร้างทริปใหม่
                         </button>
@@ -529,7 +489,7 @@
 
                 <!-- Trips List -->
                 <div id="savedTripsListContainer" class="space-y-2 text-xs">
-                    <!-- Populated from Google Sheet / Cloud Backup -->
+                    <!-- Populated from Cloud DB -->
                 </div>
             </div>
 
@@ -541,56 +501,56 @@
         </div>
     </div>
 
-    <!-- Modal: Share Trip & How to Use/Deploy App -->
+    <!-- Modal: Share Trip (Verified Multi-Channel Sharing) -->
     <div id="shareDeployModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-3 md:p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-4 md:p-5 shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3 shrink-0">
                 <div>
                     <h3 class="font-bold text-sm md:text-base text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-share-nodes text-indigo-600"></i> แชร์ทริปให้เพื่อนร่วมทริป & วิธีนำแอปไปใช้จริง
+                        <i class="fa-solid fa-share-nodes text-indigo-600"></i> แชร์ทริปให้เพื่อนดู/แก้ไขร่วมกัน
                     </h3>
-                    <p class="text-[11px] text-slate-500">เลือกวิธีแชร์ข้อมูลทริปให้เพื่อนดู/แก้ไขร่วมกัน หรือนำไฟล์เว็บแอปไปเปิดใช้งาน</p>
+                    <p class="text-[11px] text-slate-500">รองรับทั้งการแชร์ผ่าน Cloud Room, โค้ดข้อความส่งทาง LINE (ใช้ได้แม้อยู่คนละระบบ) และลิงก์ URL</p>
                 </div>
                 <button onclick="closeShareDeployModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <div class="overflow-y-auto pr-1 space-y-4 flex-1 text-xs">
-                <!-- Method 1: Cloud Room Code Sharing -->
+            <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 text-xs">
+                <!-- Method 1: Cloud Room Code Sharing + Real-time Sync -->
                 <div class="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-indigo-950 flex items-center gap-1.5 text-xs md:text-sm">
                             <span class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center">1</span>
-                            แชร์ด้วย "รหัสห้องทริป (Room Code)" ให้เพื่อนโหลดข้อมูลชุดเดียวกัน
+                            แชร์ด้วย "รหัสห้องทริป (Cloud Room Code)" (ซิงค์ผ่านฐานข้อมูลกลาง)
                         </span>
-                        <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-[10px]">แนะนำ</span>
+                        <span id="liveRoomBadge" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-[10px]">พร้อมแชร์</span>
                     </div>
                     <p class="text-[11px] text-slate-600">
-                        กดปุ่ม <strong>"อัปโหลดและสร้างรหัสแชร์"</strong> เพื่อส่งรหัสทริปให้เพื่อนนำมากรอก เพื่อนจะเห็นการ์ด เส้นความสัมพันธ์ผู้ดูแล และยอดเงินทั้งหมดตรงกับคุณทันที
+                        เมื่อกด <strong>"อัปเดตขึ้นห้องแชร์ & คัดลอกรหัส"</strong> เพื่อนที่เปิดแอปนี้สามารถกรอกรหัสห้องเพื่อดึงข้อมูลชุดเดียวกันไปดูหรือแก้ไขต่อได้ทันที
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
                         <!-- Box A: Publish & Copy Code -->
                         <div class="p-2.5 bg-white rounded-xl border border-indigo-200 space-y-2">
-                            <div class="text-[11px] font-semibold text-slate-700">ส่งทริปนี้ให้เพื่อน:</div>
+                            <div class="text-[11px] font-semibold text-slate-700">รหัสห้องทริปของคุณ (แก้ชื่อรหัสได้):</div>
                             <div class="flex items-center gap-1.5">
-                                <input type="text" id="publicShareCodeDisplay" readonly
-                                    class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 font-mono font-bold text-indigo-700 text-xs text-center"
-                                    value="TRIP-DEMO">
+                                <input type="text" id="publicShareCodeDisplay"
+                                    class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono font-bold text-indigo-700 text-xs text-center uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value="TRIP-8899">
                                 <button onclick="publishTripToPublicShare()" id="publishShareBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลด & คัดลอกรหัส
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> อัปเดต & คัดลอก
                                 </button>
                             </div>
                         </div>
 
                         <!-- Box B: Join by Friend's Code -->
                         <div class="p-2.5 bg-white rounded-xl border border-indigo-200 space-y-2">
-                            <div class="text-[11px] font-semibold text-slate-700">มีรหัสทริปจากเพื่อน? กรอกเพื่อโหลด:</div>
+                            <div class="text-[11px] font-semibold text-slate-700">มีรหัสห้องจากเพื่อน? กรอกเพื่อดึงข้อมูล:</div>
                             <div class="flex items-center gap-1.5">
-                                <input type="text" id="joinShareCodeInput" placeholder="เช่น TRIP-8492"
+                                <input type="text" id="joinShareCodeInput" placeholder="เช่น TRIP-8899"
                                     class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-xs uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <button onclick="loadTripByShareCode()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1">
+                                <button onclick="loadTripByShareCode()" id="joinShareBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1">
                                     <i class="fa-solid fa-download"></i> ดึงทริป
                                 </button>
                             </div>
@@ -598,11 +558,43 @@
                     </div>
                 </div>
 
-                <!-- Method 2: Share Summary to Line / Export & Import Trip JSON -->
+                <!-- Method 2: Universal Portable Share Code / Link (Works 100% Everywhere even across offline/different hosts) -->
+                <div class="p-3.5 rounded-2xl bg-violet-50/70 border border-violet-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-violet-950 flex items-center gap-1.5 text-xs md:text-sm">
+                            <span class="w-5 h-5 rounded-full bg-violet-600 text-white text-[11px] flex items-center justify-center">2</span>
+                            ลิงก์ทริปแบบพกพา & โค้ดข้อความ (เปิดข้ามเครื่อง/ข้ามเว็บได้ 100%)
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-semibold text-[10px]">ใช้ได้ทุกที่ไม่ต้องง้อเซิร์ฟเวอร์</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600">
+                        ระบบจะบีบอัดข้อมูลทริปทั้งหมดไว้ใน <strong>ลิงก์ URL</strong> หรือ <strong>โค้ดข้อความสั้นๆ</strong> ส่งเข้าแชท LINE ให้เพื่อนก๊อปปี้มาวางช่องด้านล่างเพื่อเปิดดูทริปได้ทันทีแม้เปิดจากคนละเว็บ
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="copyShareableUrlLink()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium text-[11px] flex items-center gap-1.5 shadow-2xs">
+                            <i class="fa-solid fa-link"></i> คัดลอกลิงก์ URL ที่มีข้อมูลทริปในตัว
+                        </button>
+                        <button onclick="copyPortableTripToken()" class="px-3 py-2 rounded-xl bg-white hover:bg-violet-100 text-violet-800 border border-violet-300 font-medium text-[11px] flex items-center gap-1.5">
+                            <i class="fa-solid fa-key"></i> คัดลอก "โค้ดข้อมูลทริป" ส่งทางแชท
+                        </button>
+                    </div>
+                    <div class="pt-1">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">วาง "โค้ดข้อมูลทริป" หรือลิงก์ที่เพื่อนส่งมาที่นี่:</label>
+                        <div class="flex gap-1.5">
+                            <input type="text" id="pastePortableTokenInput" placeholder="วางโค้ด TRIPDATA:... หรือลิงก์ URL ที่นี่แล้วกดโหลด"
+                                class="flex-1 px-2.5 py-1.5 rounded-lg bg-white border border-violet-200 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <button onclick="loadFromPortableTripToken()" class="px-3 py-1.5 rounded-lg bg-violet-700 hover:bg-violet-800 text-white font-medium text-[11px] shrink-0">
+                                โหลดโค้ดทริป
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method 3: Share Summary to Line / Export & Import Trip JSON -->
                 <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2.5">
                     <div class="font-bold text-emerald-950 flex items-center gap-1.5 text-xs md:text-sm">
-                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] flex items-center justify-center">2</span>
-                        ส่งสรุปเข้ากลุ่ม LINE หรือส่งเป็นไฟล์ทริป (.json / .csv)
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] flex items-center justify-center">3</span>
+                        ส่งข้อความสรุปยอดเข้ากลุ่ม LINE หรือส่งเป็นไฟล์ (.json)
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button onclick="copySummaryToClipboard()" class="p-2.5 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition">
@@ -611,42 +603,20 @@
                         </button>
                         <button onclick="downloadTripBackupJson()" class="p-2.5 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-200 text-slate-700 font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition">
                             <i class="fa-solid fa-file-export text-indigo-600"></i>
-                            <span>ดาวน์โหลดไฟล์ทริป (.json)</span>
+                            <span>ดาวน์โหลดไฟล์ (.json)</span>
                         </button>
                         <label class="p-2.5 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-200 text-slate-700 font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer">
                             <i class="fa-solid fa-file-import text-amber-600"></i>
-                            <span>เปิดไฟล์ทริปของเพื่อน</span>
+                            <span>เปิดไฟล์ทริป (.json)</span>
                             <input type="file" accept=".json" onchange="importTripBackupJson(event)" class="hidden">
                         </label>
-                    </div>
-                </div>
-
-                <!-- Method 3: How to Deploy / Host the Web App -->
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                    <div class="font-bold text-slate-800 flex items-center gap-1.5 text-xs md:text-sm">
-                        <span class="w-5 h-5 rounded-full bg-slate-800 text-white text-[11px] flex items-center justify-center">3</span>
-                        วิธีนำแอปนี้ไปเปิดใช้ข้างนอก หรือสร้างเป็นลิงก์เว็บสาธารณะฟรี
-                    </div>
-                    <div class="space-y-2 text-[11px] text-slate-600 leading-relaxed">
-                        <div class="p-2.5 rounded-xl bg-white border border-slate-200/80">
-                            <strong class="text-slate-800">วิธีที่ ก. แชร์จากหน้า Canvas นี้โดยตรง (ง่ายที่สุด):</strong>
-                            คลิกปุ่ม <strong>Share / แชร์</strong> มุมขวาบนของหน้าจอระบบ เพื่อสร้างลิงก์ส่งให้เพื่อนเปิดใช้งานแอปนี้บนมือถือหรือคอมพิวเตอร์ได้ทันที
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-white border border-slate-200/80">
-                            <strong class="text-slate-800">วิธีที่ ข. บันทึกเป็นไฟล์เดียวส่งเข้า LINE / มือถือ / คอมพิวเตอร์:</strong>
-                            คัดลอกโค้ดทั้งหมดในไฟล์นี้ไปบันทึกเป็นชื่อ <code>index.html</code> สามารถดับเบิลคลิกเปิดในเบราว์เซอร์ Chrome / Safari ได้ทันทีโดยไม่ต้องลงโปรแกรมเพิ่ม
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-white border border-slate-200/80">
-                            <strong class="text-slate-800">วิธีที่ ค. อัปโหลดขึ้นเว็บฟรี (เช่น GitHub Pages, Netlify Drop, Vercel):</strong>
-                            เพียงลากไฟล์ <code>index.html</code> ไปวางที่เว็บ <span class="font-mono text-indigo-600">app.netlify.com/drop</span> หรือใช้ร่วมกับ <strong>Google Sheet Web App URL</strong> (ในเมนู "โหลดทริป / ตั้งค่า Sheet") เพื่อให้ทุกคนในกลุ่มใช้ Google Sheet เดียวกันเป็นฐานข้อมูลกลางได้ฟรี 100%
-                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end shrink-0">
                 <button onclick="closeShareDeployModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium">
-                    เข้าใจแล้ว / ปิดหน้าต่าง
+                    ปิดหน้าต่าง
                 </button>
             </div>
         </div>
@@ -681,7 +651,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <button onclick="saveTripToGoogleSheet(); setTimeout(renderDatabaseViewer, 400);" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1">
+                    <button onclick="saveTripToCloud(); setTimeout(renderDatabaseViewer, 400);" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1">
                         <i class="fa-solid fa-floppy-disk"></i> บันทึกสถานะปัจจุบันลง DB
                     </button>
                     <button onclick="copyRawDatabaseJson()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium flex items-center gap-1">
@@ -696,7 +666,7 @@
             </div>
 
             <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 shrink-0">
-                <span>💡 ข้อมูลถูกเก็บใน <strong>Cloud Firestore</strong> ของระบบ และสามารถซิงค์ออกเป็นตารางใน <strong>Google Sheets</strong> ของคุณเองได้</span>
+                <span>💡 ข้อมูลถูกเก็บใน <strong>Cloud Firestore</strong> ของระบบ พร้อมรองรับการแชร์ผ่านรหัสห้องและโค้ดข้อความ</span>
                 <button onclick="closeDatabaseViewerModal()" class="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium">
                     ปิดหน้าต่าง
                 </button>
@@ -1028,10 +998,11 @@
 
     <script>
         /**************************************************************
-         * STATE MANAGEMENT & COMPACT CARD DIMENSIONS
+         * STATE MANAGEMENT & COMPACT / COLLAPSIBLE CARD DIMENSIONS
          **************************************************************/
         const CARD_WIDTH = 166;
-        const CARD_HEIGHT = 152;
+        const CARD_HEIGHT_EXPANDED = 152;
+        const CARD_HEIGHT_COLLAPSED = 68;
 
         const ROLE_META = {
             adult: {
@@ -1102,7 +1073,7 @@
             currentTripId: 'trip_demo_1',
             shareRoomCode: 'TRIP-8899',
             tripName: 'ทริปครอบครัวพูลวิลล่าหัวหิน',
-            googleSheetWebAppUrl: '', // URL ของ Google Apps Script Web App
+            autoFamilySponsorRule: true, // ค่าเริ่มต้น: ถ้าเป็นเด็ก/ผู้สูงอายุ ให้ผู้ใหญ่ในแก๊งเดียวกันหารออกให้
             mobileView: 'board', // 'board' | 'manage' | 'summary'
             selectedRoleForNew: 'adult',
             summaryTab: 'actual', // 'actual' | 'settlement' | 'family' | 'individual'
@@ -1117,7 +1088,7 @@
             baseStayPayerId: '',
             subExpenses: [], // { id, type, title, amount, payerId }
             families: [],    // { id, name, color }
-            members: [],     // { id, name, role, familyId, foodPct, stayPct, sponsorIds: [], manualAdvance: 0, x, y }
+            members: [],     // { id, name, role, familyId, foodPct, stayPct, sponsorIds: [], manualAdvance: 0, collapsed: false, x, y }
         };
 
         // Interactive Drag & Connection State
@@ -1131,90 +1102,111 @@
             sourceSponsorId: null
         };
 
+        function getMemberCardHeight(member) {
+            return member && member.collapsed ? CARD_HEIGHT_COLLAPSED : CARD_HEIGHT_EXPANDED;
+        }
+
         /**************************************************************
-         * CLOUD DATABASE & GOOGLE SHEETS INTEGRATION
+         * DEFAULT RULE: AUTO-ASSIGN FAMILY ADULTS AS SPONSORS FOR CHILD/SENIOR
          **************************************************************/
-        const GOOGLE_APPS_SCRIPT_TEMPLATE = `function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
-  try {
-    var body = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+        function handleAutoFamilyRuleToggle(checked) {
+            appState.autoFamilySponsorRule = Boolean(checked);
+            if (appState.autoFamilySponsorRule) {
+                applyDefaultFamilySponsorsForMember(null, true);
+                updateAllViews();
+                showToast('เปิดระบบผูกผู้ใหญ่ในแก๊งเดียวกันให้ดูแลเด็ก/ผู้สูงอายุอัตโนมัติแล้ว');
+            } else {
+                showToast('ปิดการผูกผู้ดูแลอัตโนมัติเมื่อเพิ่มสมาชิกใหม่');
+            }
+        }
 
-    // 1. บันทึกฐานข้อมูลทริปลงชีต Trips_DB (สำหรับโหลดกลับมาแก้ไขบนเว็บ)
-    var dbSheet = ss.getSheetByName('Trips_DB');
-    if (!dbSheet) {
-      dbSheet = ss.insertSheet('Trips_DB');
-      dbSheet.appendRow(['TripID', 'TripName', 'GrandTotal', 'MemberCount', 'UpdatedAt', 'RawJSON']);
-      dbSheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#e0e7ff');
-    }
+        /**
+         * หากเปิด autoFamilySponsorRule:
+         * - เมื่อเพิ่มเด็ก/ผู้สูงอายุ หรือย้ายเข้าแก๊ง จะตั้งให้ผู้ใหญ่ทุกคนในแก๊งนั้นเป็นผู้ดูแลทันที (หากยังไม่มีผู้ดูแล)
+         * - เมื่อเพิ่มผู้ใหญ่คนใหม่เข้าแก๊ง จะเข้าไปช่วยหารดูแลเด็ก/ผู้สูงอายุในแก๊งเดียวกันโดยอัตโนมัติ
+         */
+        function applyDefaultFamilySponsorsForMember(targetMemberId = null, forceSyncAllInFamily = false) {
+            if (!appState.autoFamilySponsorRule) return;
 
-    if (body.action === 'delete') {
-      var rows = dbSheet.getDataRange().getValues();
-      for (var i = rows.length - 1; i >= 1; i--) {
-        if (rows[i][0] === body.tripId) dbSheet.deleteRow(i + 1);
-      }
-      return ContentService.createTextOutput(JSON.stringify({ status: 'deleted' })).setMimeType(ContentService.MimeType.JSON);
-    }
+            if (targetMemberId && !forceSyncAllInFamily) {
+                const target = appState.members.find(m => m.id === targetMemberId);
+                if (!target || !target.familyId) return;
 
-    var trip = body.trip;
-    var rows = dbSheet.getDataRange().getValues();
-    var foundRow = -1;
-    for (var i = 1; i < rows.length; i++) {
-      if (rows[i][0] === trip.id) { foundRow = i + 1; break; }
-    }
-    var rowData = [
-      trip.id,
-      trip.tripName,
-      trip.summaryGrandTotal || 0,
-      (trip.members || []).length,
-      new Date(trip.updatedAt).toLocaleString('th-TH'),
-      JSON.stringify(trip)
-    ];
-    if (foundRow > 0) {
-      dbSheet.getRange(foundRow, 1, 1, 6).setValues([rowData]);
-    } else {
-      dbSheet.appendRow(rowData);
-    }
+                const famMembers = appState.members.filter(m => m.familyId === target.familyId);
+                const famAdults = famMembers.filter(m => m.role === 'adult');
+                const adultIds = famAdults.map(a => a.id);
 
-    // 2. สร้าง/อัปเดตตารางรายงานสรุปรายคนในชีต "สรุปรายคน_ล่าสุด" ให้อ่านง่ายใน Google Sheet
-    var repSheet = ss.getSheetByName('สรุปรายคน_ล่าสุด');
-    if (!repSheet) repSheet = ss.insertSheet('สรุปรายคน_ล่าสุด');
-    repSheet.clear();
-    repSheet.appendRow(['ชื่อทริป', trip.tripName, 'อัปเดตเมื่อ', new Date().toLocaleString('th-TH')]);
-    repSheet.appendRow(['ค่าอาหารรวม', trip.summaryFoodTotal, 'ค่าที่พักรวม', trip.summaryStayTotal, 'รวมทั้งหมด', trip.summaryGrandTotal]);
-    repSheet.appendRow([]);
-    repSheet.appendRow(['ชื่อสมาชิก', 'สถานะ', 'กลุ่มครอบครัว', '% อาหาร', '% ที่พัก', 'ยอดตัวเอง (บาท)', 'ผู้ดูแลที่จ่ายให้', 'ยอดจ่ายสุทธิ (บาท)', 'สำรองจ่ายไปก่อน (บาท)', 'ยอดเคลียร์เงิน (+จ่ายเพิ่ม / -รับคืน)']);
-    repSheet.getRange(4, 1, 1, 10).setFontWeight('bold').setBackground('#d1fae5');
+                if ((target.role === 'child' || target.role === 'senior') && adultIds.length > 0) {
+                    // ตั้งผู้ใหญ่ในแก๊งเดียวกันเป็นผู้ดูแลให้ทันที
+                    target.sponsorIds = adultIds.filter(aid => aid !== target.id && !wouldCreateCycle(aid, target.id));
+                } else if (target.role === 'adult') {
+                    // ถ้าเพิ่งเพิ่มผู้ใหญ่เข้าแก๊ง ให้ช่วยหารเด็ก/ผู้สูงอายุในแก๊งเดียวกันที่ถูกดูแลโดยคนในแก๊งอยู่แล้ว
+                    const famDependents = famMembers.filter(m => m.role === 'child' || m.role === 'senior');
+                    famDependents.forEach(dep => {
+                        if (!Array.isArray(dep.sponsorIds)) dep.sponsorIds = [];
+                        const onlyHasSameFamilySponsors = dep.sponsorIds.every(sid =>
+                            famAdults.some(a => a.id === sid)
+                        );
+                        if (onlyHasSameFamilySponsors && !dep.sponsorIds.includes(target.id) && !wouldCreateCycle(target.id, dep.id)) {
+                            dep.sponsorIds.push(target.id);
+                        }
+                    });
+                }
+                return;
+            }
 
-    (body.reportRows || []).forEach(function(r) {
-      repSheet.appendRow(r);
-    });
+            // ซิงค์ทุกแก๊งสำหรับเด็ก/ผู้สูงอายุที่ยังไม่มีผู้ดูแล
+            appState.families.forEach(fam => {
+                const famMembers = appState.members.filter(m => m.familyId === fam.id);
+                const adultIds = famMembers.filter(m => m.role === 'adult').map(a => a.id);
+                if (adultIds.length === 0) return;
 
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', tripId: trip.id })).setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
-  } finally {
-    lock.releaseLock();
-  }
-}
+                famMembers.forEach(m => {
+                    if (m.role === 'child' || m.role === 'senior') {
+                        if (!Array.isArray(m.sponsorIds) || m.sponsorIds.length === 0) {
+                            m.sponsorIds = adultIds.filter(aid => aid !== m.id && !wouldCreateCycle(aid, m.id));
+                        }
+                    }
+                });
+            });
+        }
 
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var dbSheet = ss.getSheetByName('Trips_DB');
-  if (!dbSheet) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', trips: [] })).setMimeType(ContentService.MimeType.JSON);
-  }
-  var rows = dbSheet.getDataRange().getValues();
-  var trips = [];
-  for (var i = 1; i < rows.length; i++) {
-    try {
-      trips.push(JSON.parse(rows[i][5]));
-    } catch (err) {}
-  }
-  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', trips: trips })).setMimeType(ContentService.MimeType.JSON);
-}`;
+        /**************************************************************
+         * CARD COLLAPSE / EXPAND CONTROLS
+         **************************************************************/
+        function toggleCardCollapse(e, memberId) {
+            if (e) e.stopPropagation();
+            const member = appState.members.find(m => m.id === memberId);
+            if (!member) return;
+            member.collapsed = !member.collapsed;
+            updateAllViews();
+        }
 
+        function toggleAllCardsCollapse() {
+            if (appState.members.length === 0) return;
+            const anyExpanded = appState.members.some(m => !m.collapsed);
+            appState.members.forEach(m => {
+                m.collapsed = anyExpanded;
+            });
+            updateCollapseButtonUI();
+            updateAllViews();
+            showToast(anyExpanded ? 'ย่อการ์ดทั้งหมดให้กะทัดรัดแล้ว' : 'ขยายรายละเอียดการ์ดทั้งหมดแล้ว');
+        }
+
+        function updateCollapseButtonUI() {
+            const btn = document.getElementById('toggleAllCardsBtn');
+            if (!btn) return;
+            const allCollapsed = appState.members.length > 0 && appState.members.every(m => m.collapsed);
+            if (allCollapsed) {
+                btn.innerHTML = `<i class="fa-solid fa-expand text-indigo-600"></i> <span>ขยายการ์ดทั้งหมด</span>`;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-compress text-slate-600"></i> <span>ย่อการ์ดทั้งหมด</span>`;
+            }
+        }
+
+        /**************************************************************
+         * CLOUD DATABASE PERSISTENCE
+         **************************************************************/
         window.updateSavedTripsBadge = function() {
             const count = window.cloudDb ? window.cloudDb.savedTrips.length : 0;
             const badge = document.getElementById('savedTripsCountBadge');
@@ -1225,93 +1217,16 @@ function doGet(e) {
             }
         };
 
-        function toggleGasGuide() {
-            const box = document.getElementById('gasGuideBox');
-            if (box) box.classList.toggle('hidden');
-        }
-
-        function copyGoogleAppsScriptCode() {
-            const textArea = document.createElement('textarea');
-            textArea.value = GOOGLE_APPS_SCRIPT_TEMPLATE;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            showToast('คัดลอกโค้ด Google Apps Script แล้ว นำไปวางใน Google Sheet ได้เลย!');
-        }
-
-        function saveGasWebhookUrl() {
-            const input = document.getElementById('gasWebhookUrlInput');
-            const url = (input ? input.value.trim() : '');
-            appState.googleSheetWebAppUrl = url;
-            const statusEl = document.getElementById('sheetConnectionStatus');
-            if (url) {
-                if (statusEl) statusEl.innerHTML = `<span class="text-emerald-700 font-semibold">✅ เชื่อมต่อ URL Google Sheet แล้ว พร้อมบันทึกและดึงข้อมูล</span>`;
-                showToast('บันทึกลิงก์ Google Sheet เรียบร้อยแล้ว');
-                fetchTripsFromGoogleSheet();
-            } else {
-                if (statusEl) statusEl.textContent = '💡 ยังไม่ได้ระบุลิงก์ Google Sheet (ระบบจะใช้ฐานข้อมูลสำรองแทน)';
-                showToast('ล้างลิงก์ Google Sheet แล้ว');
-            }
-        }
-
-        async function fetchTripsFromGoogleSheet() {
-            const url = appState.googleSheetWebAppUrl;
-            if (!url) {
-                showToast('กรุณาวาง Web App URL ของ Google Sheet ก่อนกดดึงข้อมูล');
-                return;
-            }
-            const btn = document.getElementById('syncSheetBtn');
-            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-            try {
-                const res = await fetch(url, { method: 'GET', redirect: 'follow' });
-                const data = await res.json();
-                if (data && Array.isArray(data.trips)) {
-                    data.trips.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                    window.cloudDb.savedTrips = data.trips;
-                    window.updateSavedTripsBadge();
-                    showToast(`ดึงข้อมูลจาก Google Sheet สำเร็จ (${data.trips.length} ทริป)`);
-                }
-            } catch (err) {
-                console.warn('Google Sheet fetch warning:', err);
-                showToast('ไม่สามารถดึงรายการจาก Google Sheet ได้ กรุณาตรวจสอบสิทธิ์ Web App (Anyone)');
-            } finally {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i>`;
-            }
-        }
-
-        function buildSheetReportRows(calc) {
-            return appState.members.map(m => {
-                const info = calc.byMember[m.id];
-                const fam = getFamilyById(m.familyId);
-                const sponsors = (m.sponsorIds || [])
-                    .map(sid => appState.members.find(s => s.id === sid)?.name)
-                    .filter(Boolean)
-                    .join(', ');
-                return [
-                    m.name,
-                    ROLE_META[m.role]?.label || m.role,
-                    fam ? fam.name : '-',
-                    m.foodPct,
-                    m.stayPct,
-                    Number(info.ownTotalCost.toFixed(2)),
-                    sponsors || '-',
-                    Number(info.netTotalPay.toFixed(2)),
-                    Number(info.advancePaid.toFixed(2)),
-                    Number(info.settlementBalance.toFixed(2))
-                ];
-            });
-        }
-
-        async function saveTripToGoogleSheet() {
+        async function saveTripToCloud() {
             const btn = document.getElementById('saveCloudBtn');
             if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังบันทึก...</span>`;
 
             const calc = calculateTripShares();
             const payload = {
                 id: appState.currentTripId || ('trip_' + Date.now()),
+                shareRoomCode: appState.shareRoomCode || 'TRIP-8899',
                 tripName: appState.tripName || 'ทริปไม่มีชื่อ',
-                googleSheetWebAppUrl: appState.googleSheetWebAppUrl || '',
+                autoFamilySponsorRule: Boolean(appState.autoFamilySponsorRule),
                 roleRates: appState.roleRates,
                 baseFoodExpense: Number(appState.baseFoodExpense) || 0,
                 baseFoodPayerId: appState.baseFoodPayerId || '',
@@ -1329,93 +1244,18 @@ function doGet(e) {
             appState.currentTripId = payload.id;
 
             try {
-                // 1. บันทึกลงฐานข้อมูลคลาวด์สำรองเสมอ
                 if (window.persistTripDoc) {
                     await window.persistTripDoc(payload);
                 }
-
-                // 2. ถ้าตั้งค่า Google Sheet Web App URL ไว้ จะส่งไปบันทึกลง Google Sheet ทันที
-                if (appState.googleSheetWebAppUrl) {
-                    const reportRows = buildSheetReportRows(calc);
-                    await fetch(appState.googleSheetWebAppUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            action: 'save',
-                            trip: payload,
-                            reportRows: reportRows
-                        })
-                    });
-                    showToast(`บันทึก "${payload.tripName}" ลง Google Sheet เรียบร้อยแล้ว!`);
-                } else {
-                    showToast(`บันทึกทริปแล้ว (ตั้งค่า URL ในเมนู "โหลดทริป / ตั้งค่า Sheet" เพื่อซิงค์ลง Google Sheet ได้)`);
-                }
+                showToast(`บันทึกทริป "${payload.tripName}" ลงฐานข้อมูลเรียบร้อยแล้ว!`);
             } catch (err) {
-                showToast('เกิดข้อผิดพลาดในการส่งข้อมูลไป Google Sheet');
+                showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
             } finally {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-table"></i> <span>บันทึกเข้า Google Sheet</span>`;
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกทริป</span>`;
             }
         }
 
-        /**
-         * ส่งออกตารางคำนวณเป็นไฟล์ CSV (UTF-8 with BOM สำหรับภาษาไทย) เพื่อนำไปเปิดใน Google Sheets หรือ Excel ได้ทันที
-         */
-        function exportTripToCSV() {
-            const calc = calculateTripShares();
-            const rows = [
-                ['ชื่อทริป', appState.tripName],
-                ['ค่าอาหารรวม (บาท)', calc.totalFood.toFixed(2)],
-                ['ค่าที่พักรวม (บาท)', calc.totalStay.toFixed(2)],
-                ['ค่าใช้จ่ายรวมทั้งหมด (บาท)', calc.grandTotal.toFixed(2)],
-                [],
-                ['ชื่อสมาชิก', 'สถานะ', 'กลุ่มครอบครัว', 'สัดส่วนอาหาร (%)', 'สัดส่วนที่พัก (%)', 'ค่าอาหารตัวเอง', 'ค่าที่พักตัวเอง', 'รวมยอดตัวเอง', 'ผู้ดูแลที่หารจ่ายให้', 'ยอดจ่ายจริงสุทธิ', 'สำรองจ่ายล่วงหน้า', 'ยอดเคลียร์เงิน (+จ่ายเพิ่ม / -รับคืน)']
-            ];
-
-            appState.members.forEach(m => {
-                const info = calc.byMember[m.id];
-                const fam = getFamilyById(m.familyId);
-                const sponsors = (m.sponsorIds || [])
-                    .map(sid => appState.members.find(s => s.id === sid)?.name)
-                    .filter(Boolean)
-                    .join(' / ');
-
-                rows.push([
-                    m.name,
-                    ROLE_META[m.role]?.label || m.role,
-                    fam ? fam.name : '-',
-                    m.foodPct,
-                    m.stayPct,
-                    info.ownFoodCost.toFixed(2),
-                    info.ownStayCost.toFixed(2),
-                    info.ownTotalCost.toFixed(2),
-                    sponsors || '-',
-                    info.netTotalPay.toFixed(2),
-                    info.advancePaid.toFixed(2),
-                    info.settlementBalance.toFixed(2)
-                ]);
-            });
-
-            const csvContent = '\uFEFF' + rows.map(r =>
-                r.map(field => `"${String(field ?? '').replace(/"/g, '""')}"`).join(',')
-            ).join('\r\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${appState.tripName || 'TripShare'}_GoogleSheet.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast('ดาวน์โหลดไฟล์ CSV สำหรับนำเข้า Google Sheets เรียบร้อยแล้ว');
-        }
-
         function openSavedTripsModal() {
-            const urlInput = document.getElementById('gasWebhookUrlInput');
-            if (urlInput) urlInput.value = appState.googleSheetWebAppUrl || '';
             renderSavedTripsList();
             const modal = document.getElementById('savedTripsModal');
             modal.classList.remove('hidden');
@@ -1430,6 +1270,7 @@ function doGet(e) {
 
         function createNewBlankTrip() {
             appState.currentTripId = 'trip_' + Date.now();
+            appState.shareRoomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
             appState.tripName = 'ทริปใหม่ ' + new Date().toLocaleDateString('th-TH');
             document.getElementById('tripNameInput').value = appState.tripName;
             clearBoard();
@@ -1440,27 +1281,8 @@ function doGet(e) {
         function loadTripFromSaved(tripId) {
             const found = (window.cloudDb?.savedTrips || []).find(t => t.id === tripId);
             if (!found) return;
-
-            appState.currentTripId = found.id;
-            appState.tripName = found.tripName || 'ทริปที่บันทึกไว้';
-            if (found.googleSheetWebAppUrl && !appState.googleSheetWebAppUrl) {
-                appState.googleSheetWebAppUrl = found.googleSheetWebAppUrl;
-            }
-            appState.roleRates = found.roleRates || appState.roleRates;
-            appState.baseFoodExpense = Number(found.baseFoodExpense) || 0;
-            appState.baseFoodPayerId = found.baseFoodPayerId || '';
-            appState.baseStayExpense = Number(found.baseStayExpense) || 0;
-            appState.baseStayPayerId = found.baseStayPayerId || '';
-            appState.subExpenses = Array.isArray(found.subExpenses) ? found.subExpenses : [];
-            appState.families = Array.isArray(found.families) ? found.families : [];
-            appState.members = Array.isArray(found.members) ? found.members : [];
-
-            document.getElementById('tripNameInput').value = appState.tripName;
-            document.getElementById('baseFoodInput').value = appState.baseFoodExpense;
-            document.getElementById('baseStayInput').value = appState.baseStayExpense;
-
+            applyImportedTripObject(found);
             closeSavedTripsModal();
-            updateAllViews();
             showToast(`โหลดทริป "${appState.tripName}" เรียบร้อยแล้ว`);
         }
 
@@ -1468,23 +1290,61 @@ function doGet(e) {
             if (window.removeTripDoc) {
                 await window.removeTripDoc(tripId);
             }
-            if (appState.googleSheetWebAppUrl) {
-                try {
-                    await fetch(appState.googleSheetWebAppUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: 'delete', tripId })
-                    });
-                } catch (e) {}
-            }
             renderSavedTripsList();
             showToast('ลบทริปออกจากรายการที่บันทึกแล้ว');
         }
 
         /**************************************************************
-         * SHARE TRIP & DEPLOYMENT HELPERS (ROOM CODE + JSON FILE)
+         * VERIFIED MULTI-CHANNEL TRIP SHARING (CLOUD ROOM + URL HASH + PORTABLE TOKEN)
          **************************************************************/
+        function buildCompactSharePayload() {
+            const calc = calculateTripShares();
+            return {
+                id: appState.currentTripId || ('trip_' + Date.now()),
+                shareRoomCode: (document.getElementById('publicShareCodeDisplay')?.value || appState.shareRoomCode || 'TRIP-8899').trim().toUpperCase(),
+                tripName: appState.tripName,
+                autoFamilySponsorRule: Boolean(appState.autoFamilySponsorRule),
+                roleRates: appState.roleRates,
+                baseFoodExpense: Number(appState.baseFoodExpense) || 0,
+                baseFoodPayerId: appState.baseFoodPayerId || '',
+                baseStayExpense: Number(appState.baseStayExpense) || 0,
+                baseStayPayerId: appState.baseStayPayerId || '',
+                subExpenses: appState.subExpenses,
+                families: appState.families,
+                members: appState.members,
+                summaryGrandTotal: Number(calc.grandTotal.toFixed(2)),
+                updatedAt: Date.now()
+            };
+        }
+
+        function encodeTripToBase64Token(payload) {
+            const jsonStr = JSON.stringify(payload);
+            const utf8Bytes = new TextEncoder().encode(jsonStr);
+            let binary = '';
+            for (let i = 0; i < utf8Bytes.length; i++) {
+                binary += String.fromCharCode(utf8Bytes[i]);
+            }
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function decodeTripFromBase64Token(tokenStr) {
+            let clean = String(tokenStr || '').trim();
+            if (clean.includes('#trip=')) {
+                clean = clean.split('#trip=')[1].split('&')[0];
+            } else if (clean.startsWith('TRIPDATA:')) {
+                clean = clean.replace('TRIPDATA:', '').trim();
+            }
+            clean = clean.replace(/-/g, '+').replace(/_/g, '/');
+            while (clean.length % 4 !== 0) clean += '=';
+            const binary = atob(clean);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const jsonStr = new TextDecoder().decode(bytes);
+            return JSON.parse(jsonStr);
+        }
+
         function openShareDeployModal() {
             if (!appState.shareRoomCode) {
                 appState.shareRoomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
@@ -1503,47 +1363,34 @@ function doGet(e) {
         }
 
         async function publishTripToPublicShare() {
-            if (!appState.shareRoomCode || appState.shareRoomCode === 'TRIP-DEMO') {
-                appState.shareRoomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
-            }
             const codeEl = document.getElementById('publicShareCodeDisplay');
-            if (codeEl) codeEl.value = appState.shareRoomCode;
+            let customCode = (codeEl ? codeEl.value.trim().toUpperCase() : '');
+            if (!customCode) {
+                customCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
+                if (codeEl) codeEl.value = customCode;
+            }
+            appState.shareRoomCode = customCode;
 
             const btn = document.getElementById('publishShareBtn');
             if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลด...`;
 
-            const calc = calculateTripShares();
-            const payload = {
-                id: appState.currentTripId || ('trip_' + Date.now()),
-                shareRoomCode: appState.shareRoomCode,
-                tripName: appState.tripName,
-                roleRates: appState.roleRates,
-                baseFoodExpense: Number(appState.baseFoodExpense) || 0,
-                baseFoodPayerId: appState.baseFoodPayerId || '',
-                baseStayExpense: Number(appState.baseStayExpense) || 0,
-                baseStayPayerId: appState.baseStayPayerId || '',
-                subExpenses: appState.subExpenses,
-                families: appState.families,
-                members: appState.members,
-                summaryGrandTotal: Number(calc.grandTotal.toFixed(2)),
-                updatedAt: Date.now()
-            };
+            const payload = buildCompactSharePayload();
 
             try {
                 if (window.publishSharedTripRoom) {
                     await window.publishSharedTripRoom(appState.shareRoomCode, payload);
                 }
-                const textArea = document.createElement('textarea');
-                textArea.value = appState.shareRoomCode;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showToast(`อัปโหลดและคัดลอกรหัสห้อง "${appState.shareRoomCode}" แล้ว ส่งให้เพื่อนได้เลย!`);
+                copyTextToClipboard(appState.shareRoomCode);
+                const badge = document.getElementById('liveRoomBadge');
+                if (badge) {
+                    badge.textContent = `อัปเดตห้อง ${appState.shareRoomCode} แล้ว`;
+                    badge.className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-[10px]';
+                }
+                showToast(`อัปเดตทริปขึ้นห้อง "${appState.shareRoomCode}" และคัดลอกรหัสแล้ว!`);
             } catch (e) {
                 showToast('เกิดข้อผิดพลาดในการสร้างรหัสแชร์');
             } finally {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลด & คัดลอกรหัส`;
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> อัปเดต & คัดลอก`;
             }
         }
 
@@ -1554,23 +1401,89 @@ function doGet(e) {
                 showToast('กรุณากรอกรหัสห้องทริป เช่น TRIP-8899');
                 return;
             }
+            const btn = document.getElementById('joinShareBtn');
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
             try {
                 const found = window.fetchSharedTripRoom ? await window.fetchSharedTripRoom(code) : null;
                 if (!found) {
-                    showToast(`ไม่พบรหัสทริป "${code}" กรุณาตรวจสอบรหัสอีกครั้ง`);
+                    showToast(`ไม่พบรหัสห้อง "${code}" ในระบบ หรือลองใช้ "โค้ดข้อมูลทริป" ด้านล่างแทน`);
                     return;
                 }
                 applyImportedTripObject(found);
                 closeShareDeployModal();
-                showToast(`โหลดทริป "${found.tripName}" จากรหัส ${code} สำเร็จ!`);
+                showToast(`โหลดทริป "${found.tripName}" จากรหัสห้อง ${code} สำเร็จ!`);
             } catch (e) {
                 showToast('ไม่สามารถดึงข้อมูลจากรหัสแชร์ได้');
+            } finally {
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-download"></i> ดึงทริป`;
             }
+        }
+
+        function copyShareableUrlLink() {
+            try {
+                const payload = buildCompactSharePayload();
+                const token = encodeTripToBase64Token(payload);
+                const baseUrl = window.location.href.split('#')[0];
+                const shareUrl = `${baseUrl}#trip=${token}`;
+                try {
+                    window.history.replaceState(null, '', `#trip=${token}`);
+                } catch (err) {}
+                copyTextToClipboard(shareUrl);
+                showToast('คัดลอกลิงก์ URL ที่มีข้อมูลทริปเรียบร้อย ส่งให้เพื่อนเปิดได้เลย!');
+            } catch (e) {
+                showToast('ไม่สามารถสร้างลิงก์ URL ได้');
+            }
+        }
+
+        function copyPortableTripToken() {
+            try {
+                const payload = buildCompactSharePayload();
+                const token = 'TRIPDATA:' + encodeTripToBase64Token(payload);
+                copyTextToClipboard(token);
+                showToast('คัดลอก "โค้ดข้อมูลทริป" แล้ว ส่งให้เพื่อนวางในแอปได้เลย!');
+            } catch (e) {
+                showToast('ไม่สามารถสร้างโค้ดข้อมูลทริปได้');
+            }
+        }
+
+        function loadFromPortableTripToken() {
+            const input = document.getElementById('pastePortableTokenInput');
+            const raw = input ? input.value.trim() : '';
+            if (!raw) {
+                showToast('กรุณาวางโค้ดข้อมูลทริป (TRIPDATA:...) หรือลิงก์ URL ก่อนกดโหลด');
+                return;
+            }
+            try {
+                const decoded = decodeTripFromBase64Token(raw);
+                applyImportedTripObject(decoded);
+                input.value = '';
+                closeShareDeployModal();
+                showToast(`โหลดทริป "${appState.tripName}" สำเร็จเรียบร้อย!`);
+            } catch (e) {
+                showToast('รูปแบบโค้ดทริปไม่ถูกต้อง กรุณาคัดลอกมาใหม่อีกครั้ง');
+            }
+        }
+
+        function checkUrlHashForSharedTrip() {
+            try {
+                const hash = window.location.hash || '';
+                if (hash.startsWith('#trip=')) {
+                    const decoded = decodeTripFromBase64Token(hash);
+                    if (decoded && Array.isArray(decoded.members)) {
+                        applyImportedTripObject(decoded);
+                        showToast(`เปิดทริป "${appState.tripName}" จากลิงก์ที่แชร์เรียบร้อยแล้ว!`);
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.warn('URL Hash trip decode skipped:', e);
+            }
+            return false;
         }
 
         function downloadTripBackupJson() {
             const payload = {
-                ...appState,
+                ...buildCompactSharePayload(),
                 exportedAt: new Date().toISOString()
             };
             const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
@@ -1607,6 +1520,7 @@ function doGet(e) {
             appState.currentTripId = found.id || ('trip_' + Date.now());
             appState.shareRoomCode = found.shareRoomCode || appState.shareRoomCode;
             appState.tripName = found.tripName || 'ทริปที่นำเข้า';
+            appState.autoFamilySponsorRule = found.autoFamilySponsorRule !== undefined ? Boolean(found.autoFamilySponsorRule) : true;
             appState.roleRates = found.roleRates || appState.roleRates;
             appState.baseFoodExpense = Number(found.baseFoodExpense) || 0;
             appState.baseFoodPayerId = found.baseFoodPayerId || '';
@@ -1614,11 +1528,17 @@ function doGet(e) {
             appState.baseStayPayerId = found.baseStayPayerId || '';
             appState.subExpenses = Array.isArray(found.subExpenses) ? found.subExpenses : [];
             appState.families = Array.isArray(found.families) ? found.families : [];
-            appState.members = Array.isArray(found.members) ? found.members : [];
+            appState.members = Array.isArray(found.members) ? found.members.map(m => ({
+                ...m,
+                collapsed: Boolean(m.collapsed)
+            })) : [];
 
+            const toggleEl = document.getElementById('autoFamilySponsorToggle');
+            if (toggleEl) toggleEl.checked = appState.autoFamilySponsorRule;
             document.getElementById('tripNameInput').value = appState.tripName;
             document.getElementById('baseFoodInput').value = appState.baseFoodExpense;
             document.getElementById('baseStayInput').value = appState.baseStayExpense;
+            updateCollapseButtonUI();
             updateAllViews();
         }
 
@@ -1824,7 +1744,7 @@ function doGet(e) {
                     connection: {
                         provider: isCloudConnected ? 'Firebase Cloud Firestore' : 'In-Memory Session',
                         collectionPath: `/artifacts/${appId}/users/${uid}/trips`,
-                        googleSheetLinked: Boolean(appState.googleSheetWebAppUrl)
+                        sharedRoomPath: `/artifacts/${appId}/public/data/shared_trips/${appState.shareRoomCode || 'TRIP-8899'}`
                     },
                     activeTripDocument: appState,
                     savedFirestoreDocuments: window.cloudDb?.savedTrips || []
@@ -1838,12 +1758,7 @@ function doGet(e) {
                 activeTrip: appState,
                 savedTripsInDb: window.cloudDb?.savedTrips || []
             };
-            const textArea = document.createElement('textarea');
-            textArea.value = JSON.stringify(data, null, 2);
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
+            copyTextToClipboard(JSON.stringify(data, null, 2));
             showToast('คัดลอกข้อมูล JSON ของฐานข้อมูลลงคลิปบอร์ดแล้ว');
         }
 
@@ -1851,8 +1766,14 @@ function doGet(e) {
          * INITIALIZATION & MOBILE NAVIGATION
          **************************************************************/
         window.onload = function () {
-            loadDemoData(true);
+            const loadedFromHash = checkUrlHashForSharedTrip();
+            if (!loadedFromHash) {
+                loadDemoData(true);
+            }
             setupBoardInteractions();
+            window.addEventListener('hashchange', () => {
+                checkUrlHashForSharedTrip();
+            });
             window.addEventListener('resize', () => {
                 requestAnimationFrame(() => {
                     renderFamilyZones();
@@ -2006,6 +1927,7 @@ function doGet(e) {
                     stayPct: 100,
                     sponsorIds: [],
                     manualAdvance: 500,
+                    collapsed: false,
                     x: 605,
                     y: 42
                 }
@@ -2014,6 +1936,10 @@ function doGet(e) {
             document.getElementById('tripNameInput').value = appState.tripName;
             document.getElementById('baseFoodInput').value = appState.baseFoodExpense;
             document.getElementById('baseStayInput').value = appState.baseStayExpense;
+            const toggleEl = document.getElementById('autoFamilySponsorToggle');
+            if (toggleEl) toggleEl.checked = appState.autoFamilySponsorRule;
+
+            updateCollapseButtonUI();
 
             // If screen is mobile, arrange vertically in 2 columns automatically
             if (window.innerWidth < 640) {
@@ -2409,6 +2335,11 @@ function doGet(e) {
             const member = appState.members.find(m => m.id === memberId);
             if (!member) return;
             member.familyId = newFamilyId || null;
+
+            // หากย้ายเข้าแก๊งใหม่ และเปิดตั้งค่าอัตโนมัติ ให้ผู้ใหญ่ในแก๊งใหม่ช่วยออกให้ทันที
+            if (appState.autoFamilySponsorRule && member.familyId) {
+                applyDefaultFamilySponsorsForMember(member.id, false);
+            }
             updateAllViews();
         }
 
@@ -2455,14 +2386,31 @@ function doGet(e) {
                 stayPct: rates.stayPct,
                 sponsorIds: [],
                 manualAdvance: 0,
+                collapsed: false,
                 x: 20 + col * 180,
                 y: 42 + row * 190
             };
 
             appState.members.push(newMember);
+
+            // ใช้กฎ Default: ถ้าเป็นเด็กหรือผู้สูงอายุ ให้ผู้ใหญ่ในแก๊งเดียวกันออกให้ทันที
+            if (appState.autoFamilySponsorRule && familyId) {
+                applyDefaultFamilySponsorsForMember(newMember.id, false);
+            }
+
             nameInput.value = '';
+            updateCollapseButtonUI();
             updateAllViews();
-            showToast(`เพิ่มการ์ด "${name}" บนกระดานแล้ว`);
+
+            if ((role === 'child' || role === 'senior') && newMember.sponsorIds.length > 0) {
+                const sponsorNames = newMember.sponsorIds
+                    .map(sid => appState.members.find(m => m.id === sid)?.name)
+                    .filter(Boolean)
+                    .join(', ');
+                showToast(`เพิ่ม "${name}" และตั้งให้ผู้ใหญ่ในแก๊ง (${sponsorNames}) ดูแลให้อัตโนมัติ`);
+            } else {
+                showToast(`เพิ่มการ์ด "${name}" บนกระดานแล้ว`);
+            }
         }
 
         function deleteMember(memberId) {
@@ -2481,6 +2429,7 @@ function doGet(e) {
             if (dragState.sourceSponsorId === memberId) {
                 cancelActiveConnection();
             }
+            updateCollapseButtonUI();
             updateAllViews();
             showToast('ลบการ์ดบุคคลเรียบร้อยแล้ว');
         }
@@ -2491,6 +2440,15 @@ function doGet(e) {
             member.role = newRole;
             member.foodPct = appState.roleRates[newRole].foodPct;
             member.stayPct = appState.roleRates[newRole].stayPct;
+
+            // หากเปลี่ยนสถานะเป็นเด็กหรือผู้สูงอายุ และอยู่ในแก๊ง ให้ผูกผู้ใหญ่ในแก๊งเดียวกันให้อัตโนมัติ
+            if (appState.autoFamilySponsorRule && (newRole === 'child' || newRole === 'senior') && member.familyId) {
+                applyDefaultFamilySponsorsForMember(member.id, false);
+            } else if (newRole === 'adult' && appState.autoFamilySponsorRule) {
+                member.sponsorIds = [];
+                applyDefaultFamilySponsorsForMember(member.id, false);
+            }
+
             updateAllViews();
         }
 
@@ -2628,8 +2586,9 @@ function doGet(e) {
                     const dx = e.clientX - dragState.startX;
                     const dy = e.clientY - dragState.startY;
 
+                    const cardH = getMemberCardHeight(member);
                     const maxX = Math.max(320, board.scrollWidth - CARD_WIDTH - 12);
-                    const maxY = Math.max(480, board.scrollHeight - CARD_HEIGHT - 16);
+                    const maxY = Math.max(480, board.scrollHeight - cardH - 16);
 
                     member.x = Math.max(10, Math.min(maxX, dragState.initialCardX + dx));
                     member.y = Math.max(24, Math.min(maxY, dragState.initialCardY + dy));
@@ -2851,10 +2810,10 @@ function doGet(e) {
                 const minX = Math.min(...famMembers.map(m => m.x)) - pad;
                 const minY = Math.min(...famMembers.map(m => m.y)) - (pad + 14);
                 const maxX = Math.max(...famMembers.map(m => m.x + CARD_WIDTH)) + pad;
-                const maxY = Math.max(...famMembers.map(m => m.y + CARD_HEIGHT)) + pad;
+                const maxY = Math.max(...famMembers.map(m => m.y + getMemberCardHeight(m))) + pad;
 
                 const width = Math.max(180, maxX - minX);
-                const height = Math.max(175, maxY - minY);
+                const height = Math.max(96, maxY - minY);
                 const pal = FAMILY_PALETTE[fam.color] || FAMILY_PALETTE.indigo;
 
                 zonesHtml += `
@@ -2926,7 +2885,7 @@ function doGet(e) {
         }
 
         /**
-         * Renders Compact 166px Cards with mobile-friendly touch ports
+         * Renders Compact 166px Cards with Expand/Collapse capability and mobile-friendly touch ports
          */
         function renderBoardCards(calc) {
             const layer = document.getElementById('cardsLayer');
@@ -2945,7 +2904,7 @@ function doGet(e) {
             if (board) {
                 const minBoardW = window.innerWidth < 640 ? 340 : 680;
                 const furthestX = Math.max(minBoardW, ...appState.members.map(m => m.x + CARD_WIDTH + 30));
-                const furthestY = Math.max(520, ...appState.members.map(m => m.y + CARD_HEIGHT + 45));
+                const furthestY = Math.max(520, ...appState.members.map(m => m.y + getMemberCardHeight(m) + 45));
                 board.style.minWidth = `${furthestX}px`;
                 board.style.minHeight = `${furthestY}px`;
             }
@@ -2959,6 +2918,7 @@ function doGet(e) {
                 const isLinkingSource = dragState.sourceSponsorId === m.id;
                 const fam = getFamilyById(m.familyId);
                 const famPal = fam ? (FAMILY_PALETTE[fam.color] || FAMILY_PALETTE.indigo) : null;
+                const isCollapsed = Boolean(m.collapsed);
 
                 let topPortLabel = 'มีผู้ดูแล';
                 if (sponsors.length === 1) {
@@ -2990,8 +2950,8 @@ function doGet(e) {
                         </button>
                     </div>
 
-                    <!-- Compact Card Header -->
-                    <div class="px-2 pt-1.5 pb-1 flex items-center justify-between gap-1 border-b border-slate-100">
+                    <!-- Card Header with Collapse/Expand Button -->
+                    <div class="px-2 pt-1.5 pb-1 flex items-center justify-between gap-1 ${isCollapsed ? '' : 'border-b border-slate-100'}">
                         <div class="flex items-center gap-1 min-w-0">
                             <span class="w-5 h-5 rounded-md ${meta.headerBg} text-white flex items-center justify-center text-[10px] shrink-0">
                                 <i class="fa-solid ${meta.icon}"></i>
@@ -3001,6 +2961,9 @@ function doGet(e) {
                             </span>
                         </div>
                         <div class="flex items-center shrink-0">
+                            <button onclick="toggleCardCollapse(event, '${m.id}')" class="w-5 h-5 rounded hover:bg-slate-100 text-slate-500 hover:text-indigo-600 flex items-center justify-center text-[10px]" title="${isCollapsed ? 'ขยายการ์ด' : 'ย่อการ์ด'}">
+                                <i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                            </button>
                             <button onclick="openPersonEditModal('${m.id}')" class="w-5 h-5 rounded hover:bg-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px]" title="แก้ไข">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
@@ -3010,52 +2973,62 @@ function doGet(e) {
                         </div>
                     </div>
 
-                    <!-- Compact Body -->
-                    <div class="p-1.5 space-y-1 text-[10px]">
-                        <!-- Role & Family Quick Row -->
-                        <div class="flex items-center justify-between gap-1">
-                            <select onchange="changeMemberRoleQuick('${m.id}', this.value)"
-                                class="px-1.5 py-0.2 rounded border text-[9px] font-semibold ${meta.badgeClass} focus:outline-none cursor-pointer">
-                                <option value="adult" ${m.role === 'adult' ? 'selected' : ''}>ผู้ใหญ่</option>
-                                <option value="child" ${m.role === 'child' ? 'selected' : ''}>เด็ก</option>
-                                <option value="senior" ${m.role === 'senior' ? 'selected' : ''}>ผู้สูงอายุ</option>
+                    ${isCollapsed ? `
+                        <!-- Collapsed Compact Summary Strip -->
+                        <div class="px-2 pb-2 pt-0.5 flex items-center justify-between text-[9px]">
+                            <span class="px-1.5 py-0.2 rounded border ${meta.badgeClass} font-semibold">${meta.label}</span>
+                            <span class="font-bold ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
+                                ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (มีคนดูแล)'}
+                            </span>
+                        </div>
+                    ` : `
+                        <!-- Expanded Body -->
+                        <div class="p-1.5 space-y-1 text-[10px]">
+                            <!-- Role & Family Quick Row -->
+                            <div class="flex items-center justify-between gap-1">
+                                <select onchange="changeMemberRoleQuick('${m.id}', this.value)"
+                                    class="px-1.5 py-0.2 rounded border text-[9px] font-semibold ${meta.badgeClass} focus:outline-none cursor-pointer">
+                                    <option value="adult" ${m.role === 'adult' ? 'selected' : ''}>ผู้ใหญ่</option>
+                                    <option value="child" ${m.role === 'child' ? 'selected' : ''}>เด็ก</option>
+                                    <option value="senior" ${m.role === 'senior' ? 'selected' : ''}>ผู้สูงอายุ</option>
+                                </select>
+                                <button onclick="openPersonEditModal('${m.id}')" class="text-[9px] text-slate-500 hover:text-indigo-600 bg-slate-100 px-1 py-0.2 rounded font-medium">
+                                    🍲${m.foodPct}% 🏨${m.stayPct}%
+                                </button>
+                            </div>
+
+                            <!-- Family Mini Dropdown -->
+                            <select onchange="changeMemberFamilyQuick('${m.id}', this.value)"
+                                class="w-full px-1.5 py-0.2 rounded border text-[9px] font-medium truncate cursor-pointer focus:outline-none ${
+                                    famPal ? famPal.badgeBg : 'bg-slate-50 text-slate-500 border-slate-200'
+                                }">
+                                <option value="" ${!m.familyId ? 'selected' : ''}>-- ไม่สังกัดบ้าน --</option>
+                                ${appState.families.map(f => `
+                                    <option value="${f.id}" ${m.familyId === f.id ? 'selected' : ''}>🏠 ${escapeHtml(f.name)}</option>
+                                `).join('')}
                             </select>
-                            <button onclick="openPersonEditModal('${m.id}')" class="text-[9px] text-slate-500 hover:text-indigo-600 bg-slate-100 px-1 py-0.2 rounded font-medium">
-                                🍲${m.foodPct}% 🏨${m.stayPct}%
-                            </button>
-                        </div>
 
-                        <!-- Family Mini Dropdown -->
-                        <select onchange="changeMemberFamilyQuick('${m.id}', this.value)"
-                            class="w-full px-1.5 py-0.2 rounded border text-[9px] font-medium truncate cursor-pointer focus:outline-none ${
-                                famPal ? famPal.badgeBg : 'bg-slate-50 text-slate-500 border-slate-200'
-                            }">
-                            <option value="" ${!m.familyId ? 'selected' : ''}>-- ไม่สังกัดบ้าน --</option>
-                            ${appState.families.map(f => `
-                                <option value="${f.id}" ${m.familyId === f.id ? 'selected' : ''}>🏠 ${escapeHtml(f.name)}</option>
-                            `).join('')}
-                        </select>
-
-                        <!-- Compact Cost Box -->
-                        <div class="px-1.5 py-1 rounded-lg bg-slate-50 border border-slate-100 space-y-0.5">
-                            <div class="flex justify-between text-slate-500 text-[9px]">
-                                <span>ตัวเอง:</span>
-                                <span class="font-medium text-slate-700">${formatShortCurrency(info.ownTotalCost)}</span>
-                            </div>
-                            <div class="flex justify-between items-center border-t border-slate-200/60 pt-0.5">
-                                <span class="font-medium text-slate-700 text-[9px]">จ่ายสุทธิ:</span>
-                                <span class="font-bold text-[10px] ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
-                                    ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (มีคนดูแล)'}
-                                </span>
-                            </div>
-                            ${info.advancePaid > 0 ? `
-                                <div class="flex justify-between items-center text-[9px] text-emerald-700 bg-emerald-50 px-1 rounded">
-                                    <span>ออกก่อน:</span>
-                                    <span class="font-semibold">${formatShortCurrency(info.advancePaid)}</span>
+                            <!-- Compact Cost Box -->
+                            <div class="px-1.5 py-1 rounded-lg bg-slate-50 border border-slate-100 space-y-0.5">
+                                <div class="flex justify-between text-slate-500 text-[9px]">
+                                    <span>ตัวเอง:</span>
+                                    <span class="font-medium text-slate-700">${formatShortCurrency(info.ownTotalCost)}</span>
                                 </div>
-                            ` : ''}
+                                <div class="flex justify-between items-center border-t border-slate-200/60 pt-0.5">
+                                    <span class="font-medium text-slate-700 text-[9px]">จ่ายสุทธิ:</span>
+                                    <span class="font-bold text-[10px] ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
+                                        ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (มีคนดูแล)'}
+                                    </span>
+                                </div>
+                                ${info.advancePaid > 0 ? `
+                                    <div class="flex justify-between items-center text-[9px] text-emerald-700 bg-emerald-50 px-1 rounded">
+                                        <span>ออกก่อน:</span>
+                                        <span class="font-semibold">${formatShortCurrency(info.advancePaid)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
-                    </div>
+                    `}
 
                     <!-- Bottom Port: Sponsor Output -->
                     <div class="flex justify-center -mb-2.5 relative z-30">
@@ -3485,6 +3458,15 @@ function doGet(e) {
         /**************************************************************
          * UTILITIES: CLIPBOARD & TOAST
          **************************************************************/
+        function copyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
+
         function copySummaryToClipboard() {
             const calc = calculateTripShares();
             let lines = [];
@@ -3517,13 +3499,7 @@ function doGet(e) {
                 lines.push(`- ${m.name}: ยอดสุทธิ ${formatCurrency(info.netTotalPay)}${settleText}`);
             });
 
-            const textArea = document.createElement('textarea');
-            textArea.value = lines.join('\n');
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-
+            copyTextToClipboard(lines.join('\n'));
             showToast('คัดลอกสรุปทริปลงคลิปบอร์ดแล้ว!');
         }
 
