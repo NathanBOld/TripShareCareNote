@@ -894,7 +894,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.cloudDb = {
             db: null,
@@ -902,12 +902,16 @@
             user: null,
             appId: typeof __app_id !== 'undefined' ? __app_id : 'tripshare-carenode-app',
             savedTrips: [],
-            sharedRoomsMemory: {}
+            sharedRoomsMemory: {},
+            initialLoadDone: false
         };
 
         async function initCloudDatabase() {
             try {
-                if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+                if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                    window.cloudDb.initialLoadDone = true;
+                    return;
+                }
                 const firebaseConfig = JSON.parse(__firebase_config);
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
@@ -916,58 +920,111 @@
                 window.cloudDb.auth = auth;
                 window.cloudDb.db = db;
 
+                // RULE 3: Authenticate FIRST before any Firestore query
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
 
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     window.cloudDb.user = user;
-                    if (user) {
-                        const tripsCol = collection(db, 'artifacts', window.cloudDb.appId, 'users', user.uid, 'trips');
-                        onSnapshot(tripsCol, (snapshot) => {
-                            const list = [];
-                            snapshot.forEach(docSnap => {
-                                list.push({ id: docSnap.id, ...docSnap.data() });
-                            });
-                            list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                            window.cloudDb.savedTrips = list;
-                            if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
-                        }, (err) => {
-                            console.warn("Firestore listener warning:", err);
-                        });
+                    if (!user) return;
+
+                    // Use public collection path so saved trips persist reliably across page refreshes
+                    // even if anonymous UID changes on reload, while also merging any user-scoped trips
+                    const publicTripsCol = collection(db, 'artifacts', window.cloudDb.appId, 'public', 'data', 'saved_trips');
+                    const userTripsCol = collection(db, 'artifacts', window.cloudDb.appId, 'users', user.uid, 'trips');
+
+                    let publicTripsMap = {};
+                    let userTripsMap = {};
+
+                    function syncCombinedTrips(isFirstSnapshot = false) {
+                        const mergedMap = { ...userTripsMap, ...publicTripsMap };
+                        const list = Object.values(mergedMap).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                        window.cloudDb.savedTrips = list;
+
+                        if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
+
+                        // Auto-restore the most recently saved trip on page refresh if URL hash didn't load a specific trip
+                        if (isFirstSnapshot && !window.cloudDb.initialLoadDone) {
+                            window.cloudDb.initialLoadDone = true;
+                            const hasHashTrip = (window.location.hash || '').startsWith('#trip=');
+                            if (!hasHashTrip && list.length > 0 && window.applyImportedTripObject) {
+                                const latestTrip = list[0];
+                                window.applyImportedTripObject(latestTrip);
+                                if (window.showToast) {
+                                    window.showToast(`กู้คืนทริปล่าสุด "${latestTrip.tripName}" จากฐานข้อมูลแล้ว`);
+                                }
+                            }
+                        }
                     }
+
+                    // Listen to public saved trips collection
+                    onSnapshot(publicTripsCol, (snapshot) => {
+                        publicTripsMap = {};
+                        snapshot.forEach(docSnap => {
+                            publicTripsMap[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
+                        });
+                        syncCombinedTrips(!window.cloudDb.initialLoadDone);
+                    }, (err) => {
+                        console.warn("Public trips listener warning:", err);
+                        window.cloudDb.initialLoadDone = true;
+                    });
+
+                    // Also listen to private user trips collection for backward compatibility
+                    onSnapshot(userTripsCol, (snapshot) => {
+                        userTripsMap = {};
+                        snapshot.forEach(docSnap => {
+                            userTripsMap[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
+                        });
+                        syncCombinedTrips(false);
+                    }, (err) => {
+                        console.warn("User trips listener warning:", err);
+                    });
                 });
             } catch (e) {
                 console.warn("Cloud DB init skipped:", e);
+                window.cloudDb.initialLoadDone = true;
             }
         }
 
         window.persistTripDoc = async function(tripPayload) {
             const { db, user, appId } = window.cloudDb;
+            // Always update in-memory list immediately for instant UI feedback
+            const idx = window.cloudDb.savedTrips.findIndex(t => t.id === tripPayload.id);
+            if (idx >= 0) window.cloudDb.savedTrips[idx] = tripPayload;
+            else window.cloudDb.savedTrips.unshift(tripPayload);
+            if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
+
             if (!db || !user) {
-                // Keep in session memory list if cloud config isn't active
-                const idx = window.cloudDb.savedTrips.findIndex(t => t.id === tripPayload.id);
-                if (idx >= 0) window.cloudDb.savedTrips[idx] = tripPayload;
-                else window.cloudDb.savedTrips.unshift(tripPayload);
-                if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
                 return true;
             }
-            const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'trips', tripPayload.id);
-            await setDoc(ref, tripPayload);
+
+            // Save to both public/data/saved_trips (persists across any refresh/UID change) and users/{uid}/trips
+            const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'saved_trips', tripPayload.id);
+            const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'trips', tripPayload.id);
+            await Promise.all([
+                setDoc(publicRef, tripPayload),
+                setDoc(userRef, tripPayload)
+            ]);
             return true;
         };
 
         window.removeTripDoc = async function(tripId) {
             const { db, user, appId } = window.cloudDb;
+            window.cloudDb.savedTrips = window.cloudDb.savedTrips.filter(t => t.id !== tripId);
+            if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
+
             if (!db || !user) {
-                window.cloudDb.savedTrips = window.cloudDb.savedTrips.filter(t => t.id !== tripId);
-                if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
                 return true;
             }
-            const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'trips', tripId);
-            await deleteDoc(ref);
+            const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'saved_trips', tripId);
+            const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'trips', tripId);
+            await Promise.allSettled([
+                deleteDoc(publicRef),
+                deleteDoc(userRef)
+            ]);
             return true;
         };
 
@@ -1221,9 +1278,14 @@
             const btn = document.getElementById('saveCloudBtn');
             if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังบันทึก...</span>`;
 
+            // Ensure saving a modified demo trip creates/uses a dedicated persistent ID if needed
+            if (!appState.currentTripId || appState.currentTripId === 'trip_demo_1') {
+                appState.currentTripId = 'trip_' + Date.now();
+            }
+
             const calc = calculateTripShares();
             const payload = {
-                id: appState.currentTripId || ('trip_' + Date.now()),
+                id: appState.currentTripId,
                 shareRoomCode: appState.shareRoomCode || 'TRIP-8899',
                 tripName: appState.tripName || 'ทริปไม่มีชื่อ',
                 autoFamilySponsorRule: Boolean(appState.autoFamilySponsorRule),
@@ -1241,14 +1303,19 @@
                 updatedAt: Date.now()
             };
 
-            appState.currentTripId = payload.id;
-
             try {
                 if (window.persistTripDoc) {
                     await window.persistTripDoc(payload);
                 }
+                // Also sync URL hash silently so bookmarking/refreshing the URL keeps the exact state
+                try {
+                    const token = encodeTripToBase64Token(payload);
+                    window.history.replaceState(null, '', `#trip=${token}`);
+                } catch (hashErr) {}
+
                 showToast(`บันทึกทริป "${payload.tripName}" ลงฐานข้อมูลเรียบร้อยแล้ว!`);
             } catch (err) {
+                console.error("Save error:", err);
                 showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
             } finally {
                 if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกทริป</span>`;
@@ -1586,7 +1653,7 @@
 
             if (pathInfo) {
                 pathInfo.innerHTML = isCloudConnected
-                    ? `🟢 สถานะ: เชื่อมต่อ Cloud Firestore แล้ว | Path: <span class="text-indigo-600">/artifacts/${escapeHtml(appId)}/users/${escapeHtml(uid)}/trips</span> (${savedCount} ทริป)`
+                    ? `🟢 สถานะ: เชื่อมต่อ Cloud Firestore แล้ว | Path: <span class="text-indigo-600">/artifacts/${escapeHtml(appId)}/public/data/saved_trips</span> (${savedCount} ทริป)`
                     : `🟡 สถานะ: โหมดหน่วยความจำชั่วคราว (${savedCount} ทริป)`;
             }
 
@@ -1821,6 +1888,12 @@
         }
 
         function loadDemoData(isInitial = false) {
+            if (!isInitial) {
+                // Clear URL hash when user explicitly clicks "ตัวอย่าง" button
+                try {
+                    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                } catch (e) {}
+            }
             appState.currentTripId = 'trip_demo_1';
             appState.tripName = 'ทริปครอบครัวพูลวิลล่าหัวหิน';
             appState.roleRates = {
