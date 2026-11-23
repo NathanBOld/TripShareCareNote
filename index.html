@@ -320,25 +320,33 @@
                 <div class="px-3 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
-                        <h3 class="text-xs font-semibold text-slate-700">กระดานการ์ด & ลากเส้นผู้ดูแล</h3>
+                        <h3 class="text-xs font-semibold text-slate-700">
+                            <span class="lg:hidden">รายการสมาชิก & ผูกผู้ดูแล</span>
+                            <span class="hidden lg:inline">กระดานการ์ด & ลากเส้นผู้ดูแล</span>
+                        </h3>
+                        <span id="realtimeStatusPill" class="hidden px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span id="realtimeStatusText">LIVE</span>
+                        </span>
                     </div>
 
                     <div class="flex items-center gap-2">
                         <!-- Mobile Quick Actions inside Board -->
-                        <button onclick="switchMobileView('manage')" class="lg:hidden px-2 py-1 rounded-lg bg-indigo-600 text-white text-[11px] font-medium flex items-center gap-1">
+                        <button onclick="switchMobileView('manage')" class="lg:hidden px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[11px] font-medium flex items-center gap-1">
                             <i class="fa-solid fa-user-plus"></i> +คน/บิล
                         </button>
-                        <button onclick="toggleAllCardsCollapse()" id="toggleAllCardsBtn" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] font-medium flex items-center gap-1" title="ย่อหรือขยายการ์ดทั้งหมดบนกระดาน">
+                        <!-- Desktop-only Board Controls -->
+                        <button onclick="toggleAllCardsCollapse()" id="toggleAllCardsBtn" class="hidden lg:flex px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] font-medium items-center gap-1" title="ย่อหรือขยายการ์ดทั้งหมดบนกระดาน">
                             <i class="fa-solid fa-compress"></i> <span>ย่อการ์ดทั้งหมด</span>
                         </button>
-                        <button onclick="autoArrangeByFamily()" class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
+                        <button onclick="autoArrangeByFamily()" class="hidden lg:flex px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium items-center gap-1">
                             <i class="fa-solid fa-table-cells-large"></i> จัดเรียง
                         </button>
                     </div>
                 </div>
 
-                <!-- Connection Helper Banner -->
-                <div id="connectionHelperBanner" class="px-3 py-1.5 bg-indigo-50/90 border-b border-indigo-100 text-[11px] text-indigo-900 flex items-center justify-between gap-2">
+                <!-- Connection Helper Banner (Desktop Only) -->
+                <div id="connectionHelperBanner" class="hidden lg:flex px-3 py-1.5 bg-indigo-50/90 border-b border-indigo-100 text-[11px] text-indigo-900 items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 min-w-0">
                         <i class="fa-solid fa-circle-nodes text-indigo-600 shrink-0"></i>
                         <span id="helperText" class="truncate sm:whitespace-normal">
@@ -350,8 +358,13 @@
                     </button>
                 </div>
 
-                <!-- Scrollable/Interactive Canvas Area -->
-                <div class="relative flex-1 h-[62vh] lg:h-auto lg:min-h-[580px] overflow-auto">
+                <!-- 1. Mobile Stack View (Shown only on screens < lg) -->
+                <div id="mobileStackContainer" class="lg:hidden flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50/70">
+                    <!-- Rendered dynamically by renderMobileStackView() -->
+                </div>
+
+                <!-- 2. Desktop Interactive Canvas Area (Hidden on mobile, shown on >= lg) -->
+                <div class="hidden lg:block relative flex-1 lg:min-h-[580px] overflow-auto">
                     <div id="boardContainer" class="board-grid relative w-full h-full min-w-[340px] min-h-[520px] overflow-hidden">
                         
                         <!-- Family Zones Layer (Visual Grouping Boxes behind cards) -->
@@ -531,7 +544,7 @@
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-                        <!-- Box A: Publish & Copy Code -->
+                        <!-- Box A: Publish & Copy Code / Real-time Link -->
                         <div class="p-2.5 bg-white rounded-xl border border-indigo-200 space-y-2">
                             <div class="text-[11px] font-semibold text-slate-700">รหัสห้องทริปของคุณ (แก้ชื่อรหัสได้):</div>
                             <div class="flex items-center gap-1.5">
@@ -539,9 +552,12 @@
                                     class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono font-bold text-indigo-700 text-xs text-center uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     value="TRIP-8899">
                                 <button onclick="publishTripToPublicShare()" id="publishShareBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i> อัปเดต & คัดลอก
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> เปิดห้อง Real-time
                                 </button>
                             </div>
+                            <button onclick="copyRealtimeRoomLink()" class="w-full py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-medium text-[11px] flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-link"></i> คัดลอกลิงก์ห้อง Real-time (?room=...)
+                            </button>
                         </div>
 
                         <!-- Box B: Join by Friend's Code -->
@@ -673,7 +689,7 @@
             </div>
 
             <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 shrink-0">
-                <span>💡 ข้อมูลถูกเก็บใน <strong>Cloud Firestore</strong> ของระบบ พร้อมรองรับการแชร์ผ่านรหัสห้องและโค้ดข้อความ</span>
+                <span>💡 ข้อมูลถูกเก็บใน <strong>Supabase (PostgreSQL)</strong> พร้อมรองรับ Real-time Sync และเชื่อมต่อ Power BI ได้โดยตรง</span>
                 <button onclick="closeDatabaseViewerModal()" class="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium">
                     ปิดหน้าต่าง
                 </button>
@@ -897,167 +913,197 @@
         </div>
     </div>
 
-    <!-- Firebase SDK for Cloud Database Persistence -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Supabase SDK for Real-time PostgreSQL Database -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // =========================================================================
+        // ตั้งค่า Supabase ส่วนตัวของคุณ (คัดลอกจาก Project Settings > API บน Supabase)
+        // =========================================================================
+        const SUPABASE_URL = 'https://yxomqcougpalczhfrciq.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_HV_mXWILf5qUJarb1XuQcA_xheJXR0b';
+
+        const isSupabaseConfigured =
+            SUPABASE_URL &&
+            SUPABASE_ANON_KEY &&
+            !SUPABASE_URL.includes('YOUR_PROJECT_ID') &&
+            !SUPABASE_ANON_KEY.includes('YOUR_ANON_PUBLIC_KEY');
+
+        const supabaseClient = isSupabaseConfigured && window.supabase
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
 
         window.cloudDb = {
-            db: null,
-            auth: null,
-            user: null,
-            appId: typeof __app_id !== 'undefined' ? __app_id : 'tripshare-carenode-app',
+            db: supabaseClient,
+            provider: isSupabaseConfigured ? 'Supabase PostgreSQL (Real-time)' : 'In-Memory Session (รอใส่ Supabase Key)',
             savedTrips: [],
             sharedRoomsMemory: {},
-            initialLoadDone: false
+            activeRoomChannel: null,
+            activeRoomCode: null,
+            lastSyncedAt: 0,
+            isReceivingRemoteUpdate: false
         };
 
-        async function initCloudDatabase() {
+        function updateLiveRoomIndicator(roomCode) {
+            const pill = document.getElementById('realtimeStatusPill');
+            const text = document.getElementById('realtimeStatusText');
+            if (!pill || !text) return;
+            if (roomCode) {
+                text.textContent = `LIVE: ${roomCode}`;
+                pill.classList.remove('hidden');
+                pill.classList.add('inline-flex');
+            } else {
+                pill.classList.add('hidden');
+                pill.classList.remove('inline-flex');
+            }
+        }
+
+        async function initSupabaseDatabase() {
+            if (!supabaseClient) return;
             try {
-                if (typeof __firebase_config === 'undefined' || !__firebase_config) {
-                    window.cloudDb.initialLoadDone = true;
-                    return;
+                const { data, error } = await supabaseClient
+                    .from('trips')
+                    .select('*')
+                    .order('updated_at', { ascending: false });
+
+                if (!error && data) {
+                    window.cloudDb.savedTrips = data.map(row => row.data).filter(Boolean);
+                    if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
                 }
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
-
-                window.cloudDb.auth = auth;
-                window.cloudDb.db = db;
-
-                // RULE 3: Authenticate FIRST before any Firestore query
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, async (user) => {
-                    window.cloudDb.user = user;
-                    if (!user) return;
-
-                    // Use public collection path so saved trips persist reliably across page refreshes
-                    // even if anonymous UID changes on reload, while also merging any user-scoped trips
-                    const publicTripsCol = collection(db, 'artifacts', window.cloudDb.appId, 'public', 'data', 'saved_trips');
-                    const userTripsCol = collection(db, 'artifacts', window.cloudDb.appId, 'users', user.uid, 'trips');
-
-                    let publicTripsMap = {};
-                    let userTripsMap = {};
-
-                    function syncCombinedTrips(isFirstSnapshot = false) {
-                        const mergedMap = { ...userTripsMap, ...publicTripsMap };
-                        const list = Object.values(mergedMap).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-                        window.cloudDb.savedTrips = list;
-
-                        if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
-
-                        // Auto-restore the most recently saved trip on page refresh if URL hash didn't load a specific trip
-                        if (isFirstSnapshot && !window.cloudDb.initialLoadDone) {
-                            window.cloudDb.initialLoadDone = true;
-                            const hasHashTrip = (window.location.hash || '').startsWith('#trip=');
-                            if (!hasHashTrip && list.length > 0 && window.applyImportedTripObject) {
-                                const latestTrip = list[0];
-                                window.applyImportedTripObject(latestTrip);
-                                if (window.showToast) {
-                                    window.showToast(`กู้คืนทริปล่าสุด "${latestTrip.tripName}" จากฐานข้อมูลแล้ว`);
-                                }
-                            }
-                        }
-                    }
-
-                    // Listen to public saved trips collection
-                    onSnapshot(publicTripsCol, (snapshot) => {
-                        publicTripsMap = {};
-                        snapshot.forEach(docSnap => {
-                            publicTripsMap[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
-                        });
-                        syncCombinedTrips(!window.cloudDb.initialLoadDone);
-                    }, (err) => {
-                        console.warn("Public trips listener warning:", err);
-                        window.cloudDb.initialLoadDone = true;
-                    });
-
-                    // Also listen to private user trips collection for backward compatibility
-                    onSnapshot(userTripsCol, (snapshot) => {
-                        userTripsMap = {};
-                        snapshot.forEach(docSnap => {
-                            userTripsMap[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
-                        });
-                        syncCombinedTrips(false);
-                    }, (err) => {
-                        console.warn("User trips listener warning:", err);
-                    });
-                });
             } catch (e) {
-                console.warn("Cloud DB init skipped:", e);
-                window.cloudDb.initialLoadDone = true;
+                console.warn('Supabase init warning:', e);
             }
         }
 
         window.persistTripDoc = async function(tripPayload) {
-            const { db, user, appId } = window.cloudDb;
-            // Always update in-memory list immediately for instant UI feedback
+            const now = Date.now();
+            tripPayload.updatedAt = now;
+            window.cloudDb.lastSyncedAt = now;
+
+            // Update local memory immediately
             const idx = window.cloudDb.savedTrips.findIndex(t => t.id === tripPayload.id);
             if (idx >= 0) window.cloudDb.savedTrips[idx] = tripPayload;
             else window.cloudDb.savedTrips.unshift(tripPayload);
             if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
 
-            if (!db || !user) {
-                return true;
-            }
+            if (!supabaseClient) return true;
 
-            // Save to both public/data/saved_trips (persists across any refresh/UID change) and users/{uid}/trips
-            const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'saved_trips', tripPayload.id);
-            const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'trips', tripPayload.id);
-            await Promise.all([
-                setDoc(publicRef, tripPayload),
-                setDoc(userRef, tripPayload)
-            ]);
+            const { error } = await supabaseClient.from('trips').upsert({
+                id: tripPayload.id,
+                room_code: tripPayload.shareRoomCode || null,
+                trip_name: tripPayload.tripName || 'ทริปไม่มีชื่อ',
+                data: tripPayload,
+                updated_at: now
+            });
+
+            if (error) throw error;
+            await initSupabaseDatabase();
             return true;
         };
 
         window.removeTripDoc = async function(tripId) {
-            const { db, user, appId } = window.cloudDb;
             window.cloudDb.savedTrips = window.cloudDb.savedTrips.filter(t => t.id !== tripId);
             if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
 
-            if (!db || !user) {
-                return true;
-            }
-            const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'saved_trips', tripId);
-            const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'trips', tripId);
-            await Promise.allSettled([
-                deleteDoc(publicRef),
-                deleteDoc(userRef)
-            ]);
+            if (!supabaseClient) return true;
+            await supabaseClient.from('trips').delete().eq('id', tripId);
+            await initSupabaseDatabase();
             return true;
         };
 
-        // Public Shared Trip Room (Allows friends with Room Code to load the exact same trip)
         window.publishSharedTripRoom = async function(shareCode, tripPayload) {
             const cleanCode = String(shareCode).trim().toUpperCase();
+            const now = Date.now();
+            tripPayload.shareRoomCode = cleanCode;
+            tripPayload.updatedAt = now;
+            window.cloudDb.lastSyncedAt = now;
             window.cloudDb.sharedRoomsMemory[cleanCode] = tripPayload;
-            const { db, user, appId } = window.cloudDb;
-            if (!db || !user) return true;
-            const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_trips', cleanCode);
-            await setDoc(publicRef, tripPayload);
+
+            if (!supabaseClient) {
+                window.cloudDb.activeRoomCode = cleanCode;
+                updateLiveRoomIndicator(cleanCode + ' (Local)');
+                return true;
+            }
+
+            const { error } = await supabaseClient.from('trips').upsert({
+                id: 'room_' + cleanCode,
+                room_code: cleanCode,
+                trip_name: tripPayload.tripName || 'ทริปไม่มีชื่อ',
+                data: tripPayload,
+                updated_at: now
+            }, { onConflict: 'room_code' });
+
+            if (error) throw error;
+            window.subscribeToSharedRoom(cleanCode);
             return true;
         };
 
         window.fetchSharedTripRoom = async function(shareCode) {
             const cleanCode = String(shareCode).trim().toUpperCase();
-            const { db, user, appId } = window.cloudDb;
-            if (!db || !user) {
+            if (!supabaseClient) {
                 return window.cloudDb.sharedRoomsMemory[cleanCode] || null;
             }
-            const publicRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_trips', cleanCode);
-            const snap = await getDoc(publicRef);
-            return snap.exists() ? snap.data() : (window.cloudDb.sharedRoomsMemory[cleanCode] || null);
+
+            const { data, error } = await supabaseClient
+                .from('trips')
+                .select('data')
+                .eq('room_code', cleanCode)
+                .single();
+
+            if (error || !data || !data.data) {
+                return window.cloudDb.sharedRoomsMemory[cleanCode] || null;
+            }
+
+            window.cloudDb.lastSyncedAt = data.data.updatedAt || Date.now();
+            window.subscribeToSharedRoom(cleanCode);
+            return data.data;
         };
 
-        initCloudDatabase();
+        window.subscribeToSharedRoom = function(shareCode) {
+            const cleanCode = String(shareCode).trim().toUpperCase();
+            if (!supabaseClient) return;
+
+            if (window.cloudDb.activeRoomChannel && window.cloudDb.activeRoomCode === cleanCode) {
+                return; // Already subscribed to this room
+            }
+
+            if (window.cloudDb.activeRoomChannel) {
+                supabaseClient.removeChannel(window.cloudDb.activeRoomChannel);
+            }
+
+            window.cloudDb.activeRoomCode = cleanCode;
+            updateLiveRoomIndicator(cleanCode);
+
+            window.cloudDb.activeRoomChannel = supabaseClient
+                .channel('room_' + cleanCode)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'trips',
+                    filter: `room_code=eq.${cleanCode}`
+                }, (payload) => {
+                    const remoteTrip = payload.new?.data;
+                    if (remoteTrip && remoteTrip.updatedAt > window.cloudDb.lastSyncedAt) {
+                        window.cloudDb.lastSyncedAt = remoteTrip.updatedAt;
+                        window.cloudDb.isReceivingRemoteUpdate = true;
+                        if (window.applyImportedTripObject) {
+                            window.applyImportedTripObject(remoteTrip);
+                            if (window.showToast) {
+                                window.showToast(`อัปเดตข้อมูลล่าสุดจากห้อง ${cleanCode} แล้ว`);
+                            }
+                        }
+                        window.cloudDb.isReceivingRemoteUpdate = false;
+                    }
+                })
+                .subscribe();
+
+            // Update URL cleanly to ?room=CODE for easy sharing
+            try {
+                const newUrl = `${window.location.pathname}?room=${encodeURIComponent(cleanCode)}`;
+                window.history.replaceState(null, '', newUrl);
+            } catch (e) {}
+        };
+
+        initSupabaseDatabase();
     </script>
 
     <script>
@@ -1499,7 +1545,28 @@
             } catch (e) {
                 showToast('เกิดข้อผิดพลาดในการสร้างรหัสแชร์');
             } finally {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> อัปเดต & คัดลอก`;
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> เปิดห้อง Real-time`;
+            }
+        }
+
+        async function copyRealtimeRoomLink() {
+            const codeEl = document.getElementById('publicShareCodeDisplay');
+            let customCode = (codeEl ? codeEl.value.trim().toUpperCase() : appState.shareRoomCode || 'TRIP-8899');
+            if (!customCode) customCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
+            appState.shareRoomCode = customCode;
+            if (codeEl) codeEl.value = customCode;
+
+            try {
+                const payload = buildCompactSharePayload();
+                if (window.publishSharedTripRoom) {
+                    await window.publishSharedTripRoom(customCode, payload);
+                }
+                const baseUrl = getEffectiveShareBaseUrl();
+                const roomUrl = `${baseUrl}?room=${encodeURIComponent(customCode)}`;
+                copyTextToClipboard(roomUrl);
+                showToast(`คัดลอกลิงก์ห้อง Real-time (${customCode}) แล้ว ส่งให้เพื่อนเปิดดูพร้อมกันได้เลย!`);
+            } catch (e) {
+                showToast('ไม่สามารถสร้างลิงก์ห้อง Real-time ได้ กรุณาตรวจสอบการตั้งค่า Supabase');
             }
         }
 
@@ -1690,15 +1757,14 @@
             const pathInfo = document.getElementById('dbPathInfo');
             if (!container) return;
 
-            const uid = window.cloudDb?.user?.uid || 'local-session';
-            const appId = window.cloudDb?.appId || 'tripshare-carenode-app';
-            const isCloudConnected = Boolean(window.cloudDb?.db && window.cloudDb?.user);
+            const isCloudConnected = Boolean(window.cloudDb?.db);
+            const activeRoom = window.cloudDb?.activeRoomCode || 'ยังไม่ได้เชื่อมห้อง';
             const savedCount = (window.cloudDb?.savedTrips || []).length;
 
             if (pathInfo) {
                 pathInfo.innerHTML = isCloudConnected
-                    ? `🟢 สถานะ: เชื่อมต่อ Cloud Firestore แล้ว | Path: <span class="text-indigo-600">/artifacts/${escapeHtml(appId)}/public/data/saved_trips</span> (${savedCount} ทริป)`
-                    : `🟡 สถานะ: โหมดหน่วยความจำชั่วคราว (${savedCount} ทริป)`;
+                    ? `🟢 สถานะ: เชื่อมต่อ Supabase PostgreSQL แล้ว | ตาราง: <span class="text-indigo-600">public.trips</span> | ห้อง Real-time: <span class="text-emerald-600 font-semibold">${escapeHtml(activeRoom)}</span> (${savedCount} ทริป)`
+                    : `🟡 สถานะ: โหมดหน่วยความจำชั่วคราว (ยังไม่ได้ใส่ SUPABASE_URL / ANON_KEY) (${savedCount} ทริป)`;
             }
 
             const calc = calculateTripShares();
@@ -1853,12 +1919,12 @@
             } else {
                 const dbSnapshot = {
                     connection: {
-                        provider: isCloudConnected ? 'Firebase Cloud Firestore' : 'In-Memory Session',
-                        collectionPath: `/artifacts/${appId}/users/${uid}/trips`,
-                        sharedRoomPath: `/artifacts/${appId}/public/data/shared_trips/${appState.shareRoomCode || 'TRIP-8899'}`
+                        provider: window.cloudDb?.provider || 'In-Memory Session',
+                        table: 'public.trips',
+                        activeRealtimeRoom: window.cloudDb?.activeRoomCode || null
                     },
                     activeTripDocument: appState,
-                    savedFirestoreDocuments: window.cloudDb?.savedTrips || []
+                    savedDatabaseRows: window.cloudDb?.savedTrips || []
                 };
                 container.innerHTML = `<pre class="bg-slate-900 text-emerald-300 p-3.5 rounded-xl overflow-x-auto font-mono text-[11px] leading-relaxed select-text">${escapeHtml(JSON.stringify(dbSnapshot, null, 2))}</pre>`;
             }
@@ -1876,11 +1942,31 @@
         /**************************************************************
          * INITIALIZATION & MOBILE NAVIGATION
          **************************************************************/
-        window.onload = function () {
-            const loadedFromHash = checkUrlHashForSharedTrip();
-            if (!loadedFromHash) {
-                loadDemoData(true);
+        window.onload = async function () {
+            const params = new URLSearchParams(window.location.search);
+            const roomParam = params.get('room');
+            let loadedFromRoom = false;
+
+            if (roomParam && window.fetchSharedTripRoom) {
+                try {
+                    const found = await window.fetchSharedTripRoom(roomParam);
+                    if (found) {
+                        applyImportedTripObject(found);
+                        loadedFromRoom = true;
+                        showToast(`เชื่อมต่อห้องทริป ${roomParam.toUpperCase()} แบบ Real-time แล้ว`);
+                    }
+                } catch (e) {
+                    console.warn('Room load warning:', e);
+                }
             }
+
+            if (!loadedFromRoom) {
+                const loadedFromHash = checkUrlHashForSharedTrip();
+                if (!loadedFromHash) {
+                    loadDemoData(true);
+                }
+            }
+
             setupBoardInteractions();
             window.addEventListener('hashchange', () => {
                 checkUrlHashForSharedTrip();
@@ -2880,8 +2966,9 @@
             renderSubExpenseList();
             renderRateQuickSummary();
 
-            // 2. Render Compact Cards on Board, Family Zones & SVG Lines
+            // 2. Render Compact Cards on Board (Desktop), Mobile Stack View, Family Zones & SVG Lines
             renderBoardCards(calc);
+            renderMobileStackView(calc);
             requestAnimationFrame(() => {
                 renderFamilyZones();
                 renderConnections();
@@ -2889,6 +2976,154 @@
 
             // 3. Render Right Summary Breakdown
             renderSummaryBreakdown(calc);
+
+            // 4. Auto-Sync to Supabase Real-time Room if connected
+            triggerAutoSyncToRoom();
+        }
+
+        let autoSyncTimer = null;
+        function triggerAutoSyncToRoom() {
+            if (!window.cloudDb?.activeRoomChannel || window.cloudDb?.isReceivingRemoteUpdate) return;
+            clearTimeout(autoSyncTimer);
+            autoSyncTimer = setTimeout(() => {
+                const payload = buildCompactSharePayload();
+                if (window.publishSharedTripRoom && appState.shareRoomCode) {
+                    window.publishSharedTripRoom(appState.shareRoomCode, payload).catch(console.warn);
+                }
+            }, 1000);
+        }
+
+        /**
+         * Renders Mobile-Friendly Stack View (Grouped by Family, Tap to Link/Unlink Guardians)
+         */
+        function renderMobileStackView(calc) {
+            const container = document.getElementById('mobileStackContainer');
+            if (!container) return;
+
+            if (appState.members.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-slate-400 py-12 text-center">
+                        <i class="fa-solid fa-users-viewfinder text-3xl mb-2 text-slate-300"></i>
+                        <p class="text-xs font-medium text-slate-600">ยังไม่มีสมาชิกในทริป</p>
+                        <p class="text-[11px] mt-1">กดปุ่ม "+คน/บิล" ด้านบนเพื่อเพิ่มสมาชิก</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const groups = [
+                ...appState.families.map(f => ({
+                    id: f.id,
+                    name: f.name,
+                    color: f.color,
+                    members: appState.members.filter(m => m.familyId === f.id)
+                })),
+                {
+                    id: null,
+                    name: 'ไม่สังกัดกลุ่มครอบครัว',
+                    color: 'indigo',
+                    members: appState.members.filter(m => !m.familyId || !appState.families.some(f => f.id === m.familyId))
+                }
+            ].filter(g => g.members.length > 0);
+
+            container.innerHTML = groups.map(group => {
+                const pal = FAMILY_PALETTE[group.color] || FAMILY_PALETTE.indigo;
+
+                return `
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                        <!-- Family Group Header -->
+                        <div class="px-3 py-2 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="w-2.5 h-2.5 rounded-full ${pal.dot} shrink-0"></span>
+                                <span class="font-bold text-xs text-slate-800 truncate">${escapeHtml(group.name)}</span>
+                                <span class="text-[10px] text-slate-500">(${group.members.length} คน)</span>
+                            </div>
+                            ${group.id ? `
+                                <button onclick="autoLinkFamilyGuardians('${group.id}')"
+                                    class="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-semibold border border-indigo-200 shrink-0 flex items-center gap-1">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> ผูกผู้ปกครองทั้งบ้าน
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <!-- Stacked Member Rows -->
+                        <div class="divide-y divide-slate-100">
+                            ${group.members.map(m => {
+                                const meta = ROLE_META[m.role] || ROLE_META.adult;
+                                const info = calc.byMember[m.id];
+                                const sponsors = (m.sponsorIds || [])
+                                    .map(sid => appState.members.find(s => s.id === sid))
+                                    .filter(Boolean);
+
+                                return `
+                                    <div class="p-3 space-y-2">
+                                        <!-- Top Row: Identity + Net Pay + Edit/Delete -->
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <span class="w-7 h-7 rounded-lg ${meta.headerBg} text-white flex items-center justify-center text-xs shrink-0">
+                                                    <i class="fa-solid ${meta.icon}"></i>
+                                                </span>
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="font-bold text-xs text-slate-800 truncate">${escapeHtml(m.name)}</span>
+                                                        <span class="text-[9px] px-1.5 py-0.2 rounded border ${meta.badgeClass} font-semibold shrink-0">${meta.label}</span>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-500">
+                                                        🍲${m.foodPct}% 🏨${m.stayPct}% • ตัวเอง ${formatShortCurrency(info.ownTotalCost)}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                                <div class="text-right mr-1">
+                                                    <div class="font-bold text-xs ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
+                                                        ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0'}
+                                                    </div>
+                                                    <div class="text-[9px] text-slate-400">จ่ายสุทธิ</div>
+                                                </div>
+                                                <button onclick="openPersonEditModal('${m.id}')" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs" title="แก้ไข">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </button>
+                                                <button onclick="deleteMember('${m.id}')" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center text-xs" title="ลบ">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bottom Row: Guardians Link Chips -->
+                                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                            ${sponsors.length > 0 ? `
+                                                <span class="text-[10px] text-slate-500">ผู้ดูแล:</span>
+                                                ${sponsors.map(s => `
+                                                    <button onclick="removeSpecificConnection('${s.id}', '${m.id}')"
+                                                        class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-medium flex items-center gap-1">
+                                                        <span>${escapeHtml(s.name)}</span>
+                                                        <i class="fa-solid fa-xmark text-[9px] opacity-70"></i>
+                                                    </button>
+                                                `).join('')}
+                                            ` : `
+                                                <span class="text-[10px] text-slate-400">จ่ายเอง (ยังไม่มีผู้ดูแล)</span>
+                                            `}
+
+                                            <button onclick="openPersonEditModal('${m.id}')"
+                                                class="ml-auto px-2.5 py-0.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[10px] font-semibold flex items-center gap-1">
+                                                <i class="fa-solid fa-link"></i> ${sponsors.length > 0 ? 'ปรับผู้ดูแล' : '+ ผูกผู้ดูแล'}
+                                            </button>
+                                        </div>
+
+                                        ${info.coveredDependents.length > 0 ? `
+                                            <div class="text-[10px] text-indigo-700 bg-indigo-50/70 px-2.5 py-1 rounded-lg">
+                                                <i class="fa-solid fa-hand-holding-heart mr-1"></i>
+                                                ช่วยดูแลให้: <strong>${info.coveredDependents.map(d => escapeHtml(d.name)).join(', ')}</strong>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function renderFamilyZones() {
@@ -3554,6 +3789,14 @@
          * UTILITIES: CLIPBOARD & TOAST
          **************************************************************/
         function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).catch(() => fallbackCopyText(text));
+            } else {
+                fallbackCopyText(text);
+            }
+        }
+
+        function fallbackCopyText(text) {
             const textArea = document.createElement('textarea');
             textArea.value = text;
             document.body.appendChild(textArea);
