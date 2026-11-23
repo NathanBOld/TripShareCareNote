@@ -89,6 +89,25 @@
             70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
             100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
         }
+        /* Fullscreen Expanded Board Mode */
+        .board-expanded-mode {
+            position: fixed !important;
+            inset: 12px !important;
+            z-index: 45 !important;
+            height: calc(100vh - 24px) !important;
+            max-width: none !important;
+        }
+        .board-expanded-mode #boardViewport {
+            height: 100% !important;
+            min-height: 0 !important;
+            resize: none !important;
+        }
+        #boardViewport {
+            resize: vertical;
+        }
+        #boardContainer.panning-board {
+            cursor: grabbing !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-16 lg:pb-0">
@@ -348,10 +367,13 @@
                         </button>
                         <!-- Desktop-only Board Controls -->
                         <button onclick="toggleAllCardsCollapse()" id="toggleAllCardsBtn" class="hidden lg:flex px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] font-medium items-center gap-1" title="ย่อหรือขยายการ์ดทั้งหมดบนกระดาน">
-                            <i class="fa-solid fa-compress"></i> <span>ย่อการ์ดทั้งหมด</span>
+                            <i class="fa-solid fa-compress"></i> <span>ย่อการ์ด</span>
                         </button>
-                        <button onclick="autoArrangeByFamily()" class="hidden lg:flex px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium items-center gap-1">
+                        <button onclick="autoArrangeByFamily()" class="hidden lg:flex px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-medium items-center gap-1">
                             <i class="fa-solid fa-table-cells-large"></i> จัดเรียง
+                        </button>
+                        <button onclick="toggleExpandBoardMode()" id="expandBoardBtn" class="hidden lg:flex px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-medium items-center gap-1" title="ขยายพื้นที่กระดานเต็มหน้าจอ (กด Esc เพื่อออก)">
+                            <i class="fa-solid fa-up-right-and-down-left-from-center"></i> <span>ขยายเต็มจอ</span>
                         </button>
                     </div>
                 </div>
@@ -361,7 +383,7 @@
                     <div class="flex items-center gap-1.5 min-w-0">
                         <i class="fa-solid fa-circle-nodes text-indigo-600 shrink-0"></i>
                         <span id="helperText" class="truncate sm:whitespace-normal">
-                            แตะปุ่ม <span class="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[10px]">ดูแลจ่ายให้ ●</span> แล้วแตะ <span class="px-1.5 py-0.2 bg-amber-500 text-white rounded text-[10px]">● มีผู้ดูแล</span> (เชื่อมผู้ดูแลหลายคนเพื่อหารกันได้)
+                            ลากการ์ดขยายพื้นที่ได้อิสระ หรือลากพื้นที่ว่างเพื่อเลื่อนกระดาน • แตะ <span class="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[10px]">ดูแลให้ ●</span> แล้วแตะ <span class="px-1.5 py-0.2 bg-amber-500 text-white rounded text-[10px]">● มีผู้ดูแล</span>
                         </span>
                     </div>
                     <button id="cancelLinkBtn" onclick="cancelActiveConnection()" class="hidden px-2 py-0.5 bg-rose-600 text-white rounded-md text-[10px] shrink-0">
@@ -374,9 +396,9 @@
                     <!-- Rendered dynamically by renderMobileStackView() -->
                 </div>
 
-                <!-- 2. Desktop Interactive Canvas Area (Hidden on mobile, shown on >= lg) -->
-                <div class="hidden lg:block relative flex-1 lg:min-h-[580px] overflow-auto">
-                    <div id="boardContainer" class="board-grid relative w-full h-full min-w-[340px] min-h-[520px] overflow-hidden">
+                <!-- 2. Desktop Interactive Canvas Area (Freely Expandable & Vertically Resizable) -->
+                <div id="boardViewport" class="hidden lg:block relative flex-1 min-h-[580px] overflow-auto">
+                    <div id="boardContainer" class="board-grid relative min-w-full min-h-full cursor-grab">
                         
                         <!-- Family Zones Layer (Visual Grouping Boxes behind cards) -->
                         <div id="familyZonesLayer" class="absolute inset-0 w-full h-full pointer-events-none z-0"></div>
@@ -938,13 +960,13 @@
         // ตั้งค่า Supabase ส่วนตัวของคุณ (คัดลอกจาก Project Settings > API บน Supabase)
         // =========================================================================
         const SUPABASE_URL = 'https://yxomqcougpalczhfrciq.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY';
+        const SUPABASE_ANON_KEY = 'sb_publishable_HV_mXWILf5qUJarb1XuQcA_xheJXR0b';
 
         const isSupabaseConfigured =
             SUPABASE_URL &&
             SUPABASE_ANON_KEY &&
-            !SUPABASE_URL.includes('https://yxomqcougpalczhfrciq.supabase.co') &&
-            !SUPABASE_ANON_KEY.includes('sb_publishable_HV_mXWILf5qUJarb1XuQcA_xheJXR0b');
+            !SUPABASE_URL.includes('YOUR_PROJECT_ID') &&
+            !SUPABASE_ANON_KEY.includes('YOUR_ANON_PUBLIC_KEY');
 
         const supabaseClient = isSupabaseConfigured && window.supabase
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -1271,9 +1293,9 @@
         /**************************************************************
          * STATE MANAGEMENT & COMPACT / COLLAPSIBLE CARD DIMENSIONS
          **************************************************************/
-        const CARD_WIDTH = 150;
-        const CARD_HEIGHT_EXPANDED = 152;
-        const CARD_HEIGHT_COLLAPSED = 68;
+        const CARD_WIDTH = 136;
+        const CARD_HEIGHT_EXPANDED = 144;
+        const CARD_HEIGHT_COLLAPSED = 62;
 
         const ROLE_META = {
             adult: {
@@ -1469,9 +1491,9 @@
             if (!btn) return;
             const allCollapsed = appState.members.length > 0 && appState.members.every(m => m.collapsed);
             if (allCollapsed) {
-                btn.innerHTML = `<i class="fa-solid fa-expand text-indigo-600"></i> <span>ขยายการ์ดทั้งหมด</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-expand text-indigo-600"></i> <span>ขยายการ์ด</span>`;
             } else {
-                btn.innerHTML = `<i class="fa-solid fa-compress text-slate-600"></i> <span>ย่อการ์ดทั้งหมด</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-compress text-slate-600"></i> <span>ย่อการ์ด</span>`;
             }
         }
 
@@ -2243,6 +2265,7 @@
             });
             window.addEventListener('resize', () => {
                 requestAnimationFrame(() => {
+                    updateBoardCanvasSize(220, 220);
                     renderFamilyZones();
                     renderConnections();
                 });
@@ -2329,8 +2352,8 @@
                     sponsorIds: [],
                     manualAdvance: 0,
                     collapsed: false,
-                    x: 20,
-                    y: 42
+                    x: 24,
+                    y: 44
                 },
                 {
                     id: 'm_1793530438120_91',
@@ -2342,8 +2365,8 @@
                     sponsorIds: [],
                     manualAdvance: 0,
                     collapsed: false,
-                    x: 200,
-                    y: 42
+                    x: 176,
+                    y: 44
                 },
                 {
                     id: 'm_1793530440443_77',
@@ -2355,8 +2378,8 @@
                     sponsorIds: [],
                     manualAdvance: 0,
                     collapsed: false,
-                    x: 380,
-                    y: 42
+                    x: 328,
+                    y: 44
                 },
                 {
                     id: 'm_1793530470025_64',
@@ -2368,8 +2391,8 @@
                     sponsorIds: ['m_1793530433376_23', 'm_1793530438120_91', 'm_1793530440443_77'],
                     manualAdvance: 0,
                     collapsed: false,
-                    x: 20,
-                    y: 232
+                    x: 24,
+                    y: 224
                 },
                 {
                     id: 'm_1793530475878_47',
@@ -2381,8 +2404,8 @@
                     sponsorIds: ['m_1793530433376_23', 'm_1793530438120_91', 'm_1793530440443_77'],
                     manualAdvance: 0,
                     collapsed: false,
-                    x: 200,
-                    y: 232
+                    x: 176,
+                    y: 224
                 }
             ];
 
@@ -2842,8 +2865,8 @@
                 sponsorIds: [],
                 manualAdvance: 0,
                 collapsed: false,
-                x: 20 + col * 180,
-                y: 42 + row * 190
+                x: 24 + col * (CARD_WIDTH + 16),
+                y: 44 + row * 180
             };
 
             appState.members.push(newMember);
@@ -2955,8 +2978,8 @@
          */
         function autoArrangeByFamily(silent = false) {
             const isMobileScreen = window.innerWidth < 640;
-            const cardSpacingX = 180;
-            const cardSpacingY = 188;
+            const cardSpacingX = CARD_WIDTH + 16;
+            const cardSpacingY = 178;
 
             const groups = [
                 ...appState.families.map(f => ({
@@ -2979,7 +3002,7 @@
                     adults.forEach((m, idx) => {
                         const col = idx % 2;
                         const row = Math.floor(idx / 2);
-                        m.x = 16 + col * 174;
+                        m.x = 16 + col * (CARD_WIDTH + 14);
                         m.y = cursorY + row * cardSpacingY;
                     });
 
@@ -2989,7 +3012,7 @@
                     others.forEach((m, idx) => {
                         const col = idx % 2;
                         const row = Math.floor(idx / 2);
-                        m.x = 16 + col * 174;
+                        m.x = 16 + col * (CARD_WIDTH + 14);
                         m.y = cursorY + row * cardSpacingY;
                     });
 
@@ -3000,7 +3023,7 @@
                 // Desktop horizontal cluster flow
                 let currentX = 24;
                 const topY = 44;
-                const bottomY = 238;
+                const bottomY = 224;
 
                 groups.forEach(group => {
                     const adults = group.members.filter(m => m.role === 'adult');
@@ -3030,29 +3053,144 @@
         /**************************************************************
          * INTERACTIVE BOARD: CARD DRAG & MULTI-GUARDIAN CONNECTIONS
          **************************************************************/
+        function updateBoardCanvasSize(extraRight = 220, extraBottom = 220) {
+            const board = document.getElementById('boardContainer');
+            const viewport = document.getElementById('boardViewport');
+            const svg = document.getElementById('connectionsSvg');
+            if (!board) return;
+
+            const vpW = viewport ? viewport.clientWidth : 680;
+            const vpH = viewport ? viewport.clientHeight : 580;
+
+            const maxCardRight = appState.members.length > 0
+                ? Math.max(...appState.members.map(m => (Number(m.x) || 0) + CARD_WIDTH))
+                : 0;
+            const maxCardBottom = appState.members.length > 0
+                ? Math.max(...appState.members.map(m => (Number(m.y) || 0) + getMemberCardHeight(m)))
+                : 0;
+
+            const targetW = Math.max(vpW, 680, maxCardRight + extraRight);
+            const targetH = Math.max(vpH, 580, maxCardBottom + extraBottom);
+
+            board.style.width = `${targetW}px`;
+            board.style.height = `${targetH}px`;
+            if (svg) {
+                svg.setAttribute('width', targetW);
+                svg.setAttribute('height', targetH);
+            }
+        }
+
+        function toggleExpandBoardMode(forceState = null) {
+            const section = document.getElementById('mobilePanel_board');
+            const btn = document.getElementById('expandBoardBtn');
+            if (!section) return;
+
+            const shouldExpand = forceState !== null
+                ? Boolean(forceState)
+                : !section.classList.contains('board-expanded-mode');
+
+            if (shouldExpand) {
+                section.classList.add('board-expanded-mode');
+                document.body.classList.add('overflow-hidden');
+                if (btn) {
+                    btn.innerHTML = `<i class="fa-solid fa-down-left-and-up-right-to-center"></i> <span>ย่อกลับ</span>`;
+                    btn.className = 'hidden lg:flex px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 text-[11px] font-medium items-center gap-1';
+                }
+            } else {
+                section.classList.remove('board-expanded-mode');
+                document.body.classList.remove('overflow-hidden');
+                if (btn) {
+                    btn.innerHTML = `<i class="fa-solid fa-up-right-and-down-left-from-center"></i> <span>ขยายเต็มจอ</span>`;
+                    btn.className = 'hidden lg:flex px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-medium items-center gap-1';
+                }
+            }
+
+            requestAnimationFrame(() => {
+                updateBoardCanvasSize();
+                renderFamilyZones();
+                renderConnections();
+            });
+        }
+
         function setupBoardInteractions() {
             const board = document.getElementById('boardContainer');
+            const viewport = document.getElementById('boardViewport');
+
+            // Pan empty board background freely by dragging
+            if (board && viewport) {
+                board.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('[id^="card_"]') || e.target.closest('button') || e.target.closest('select') || e.target.closest('input') || e.target.closest('.connection-group')) {
+                        return;
+                    }
+                    if (dragState.type === 'connection') return;
+
+                    dragState.type = 'pan';
+                    dragState.startX = e.clientX;
+                    dragState.startY = e.clientY;
+                    dragState.initialScrollLeft = viewport.scrollLeft;
+                    dragState.initialScrollTop = viewport.scrollTop;
+                    board.classList.add('panning-board');
+                });
+
+                // Keep canvas & SVG lines aligned when user resizes #boardViewport vertically
+                if (typeof ResizeObserver !== 'undefined') {
+                    const ro = new ResizeObserver(() => {
+                        updateBoardCanvasSize();
+                        renderConnections();
+                    });
+                    ro.observe(viewport);
+                }
+            }
+
+            // Allow pressing Escape to exit Fullscreen Expanded Board Mode
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const section = document.getElementById('mobilePanel_board');
+                    if (section && section.classList.contains('board-expanded-mode')) {
+                        toggleExpandBoardMode(false);
+                    }
+                }
+            });
 
             window.addEventListener('pointermove', (e) => {
+                if (dragState.type === 'pan' && viewport) {
+                    const dx = e.clientX - dragState.startX;
+                    const dy = e.clientY - dragState.startY;
+                    viewport.scrollLeft = Math.max(0, dragState.initialScrollLeft - dx);
+                    viewport.scrollTop = Math.max(0, dragState.initialScrollTop - dy);
+                    return;
+                }
+
                 if (dragState.type === 'card' && dragState.memberId) {
                     const member = appState.members.find(m => m.id === dragState.memberId);
                     if (!member) return;
 
-                    const dx = e.clientX - dragState.startX;
-                    const dy = e.clientY - dragState.startY;
+                    // Auto-scroll viewport smoothly when dragging near its edges so canvas can expand infinitely
+                    if (viewport) {
+                        const vpRect = viewport.getBoundingClientRect();
+                        const edgeMargin = 44;
+                        const scrollStep = 18;
+                        if (e.clientX > vpRect.right - edgeMargin) viewport.scrollLeft += scrollStep;
+                        else if (e.clientX < vpRect.left + edgeMargin) viewport.scrollLeft = Math.max(0, viewport.scrollLeft - scrollStep);
+                        if (e.clientY > vpRect.bottom - edgeMargin) viewport.scrollTop += scrollStep;
+                        else if (e.clientY < vpRect.top + edgeMargin) viewport.scrollTop = Math.max(0, viewport.scrollTop - scrollStep);
+                    }
 
-                    const cardH = getMemberCardHeight(member);
-                    const maxX = Math.max(320, board.scrollWidth - CARD_WIDTH - 12);
-                    const maxY = Math.max(480, board.scrollHeight - cardH - 16);
+                    const scrollDeltaX = viewport ? (viewport.scrollLeft - (dragState.initialScrollLeft || 0)) : 0;
+                    const scrollDeltaY = viewport ? (viewport.scrollTop - (dragState.initialScrollTop || 0)) : 0;
+                    const dx = (e.clientX - dragState.startX) + scrollDeltaX;
+                    const dy = (e.clientY - dragState.startY) + scrollDeltaY;
 
-                    member.x = Math.max(10, Math.min(maxX, dragState.initialCardX + dx));
-                    member.y = Math.max(24, Math.min(maxY, dragState.initialCardY + dy));
+                    // No upper bounds! Cards can be dragged freely to expand the canvas in any direction.
+                    member.x = Math.max(12, dragState.initialCardX + dx);
+                    member.y = Math.max(26, dragState.initialCardY + dy);
 
                     const cardEl = document.getElementById(`card_${member.id}`);
                     if (cardEl) {
                         cardEl.style.left = `${member.x}px`;
                         cardEl.style.top = `${member.y}px`;
                     }
+                    updateBoardCanvasSize(220, 220);
                     renderFamilyZones();
                     renderConnections();
                 } else if (dragState.type === 'connection' && dragState.sourceSponsorId) {
@@ -3061,6 +3199,11 @@
             });
 
             window.addEventListener('pointerup', () => {
+                if (dragState.type === 'pan') {
+                    dragState.type = null;
+                    if (board) board.classList.remove('panning-board');
+                    return;
+                }
                 if (dragState.type === 'card') {
                     const draggedMember = appState.members.find(m => m.id === dragState.memberId);
                     const moved = draggedMember && (
@@ -3069,6 +3212,7 @@
                     );
                     dragState.type = null;
                     dragState.memberId = null;
+                    updateBoardCanvasSize(220, 220);
                     if (moved) triggerAutoSyncToRoom();
                 }
             });
@@ -3081,12 +3225,15 @@
             const member = appState.members.find(m => m.id === memberId);
             if (!member) return;
 
+            const viewport = document.getElementById('boardViewport');
             dragState.type = 'card';
             dragState.memberId = memberId;
             dragState.startX = e.clientX;
             dragState.startY = e.clientY;
             dragState.initialCardX = member.x;
             dragState.initialCardY = member.y;
+            dragState.initialScrollLeft = viewport ? viewport.scrollLeft : 0;
+            dragState.initialScrollTop = viewport ? viewport.scrollTop : 0;
         }
 
         function handleSponsorPortClick(e, sponsorId) {
@@ -3175,7 +3322,7 @@
             const tempLine = document.getElementById('tempDragLine');
             if (tempLine) tempLine.classList.add('hidden');
 
-            document.getElementById('helperText').innerHTML = `แตะปุ่ม <span class="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[10px]">ดูแลจ่ายให้ ●</span> แล้วแตะ <span class="px-1.5 py-0.2 bg-amber-500 text-white rounded text-[10px]">● มีผู้ดูแล</span> (เชื่อมผู้ดูแลหลายคนเพื่อหารกันได้)`;
+            document.getElementById('helperText').innerHTML = `ลากการ์ดขยายพื้นที่ได้อิสระ หรือลากพื้นที่ว่างเพื่อเลื่อนกระดาน • แตะ <span class="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[10px]">ดูแลให้ ●</span> แล้วแตะ <span class="px-1.5 py-0.2 bg-amber-500 text-white rounded text-[10px]">● มีผู้ดูแล</span>`;
             document.getElementById('cancelLinkBtn').classList.add('hidden');
             updateAllViews();
         }
@@ -3426,7 +3573,7 @@
                 const maxX = Math.max(...famMembers.map(m => m.x + CARD_WIDTH)) + pad;
                 const maxY = Math.max(...famMembers.map(m => m.y + getMemberCardHeight(m))) + pad;
 
-                const width = Math.max(180, maxX - minX);
+                const width = Math.max(CARD_WIDTH + pad * 2, maxX - minX);
                 const height = Math.max(96, maxY - minY);
                 const pal = FAMILY_PALETTE[fam.color] || FAMILY_PALETTE.indigo;
 
@@ -3499,13 +3646,14 @@
         }
 
         /**
-         * Renders Compact 166px Cards with Expand/Collapse capability and mobile-friendly touch ports
+         * Renders Slim 136px Cards with Expand/Collapse capability on a freely expanding canvas
          */
         function renderBoardCards(calc) {
             const layer = document.getElementById('cardsLayer');
             if (appState.members.length === 0) {
+                updateBoardCanvasSize(220, 220);
                 layer.innerHTML = `
-                    <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center pointer-events-none">
                         <i class="fa-solid fa-users-viewfinder text-3xl mb-2 text-slate-300"></i>
                         <p class="text-xs font-medium text-slate-600">ยังไม่มีการ์ดบุคคลบนกระดาน</p>
                         <p class="text-[11px] mt-1">กดปุ่ม "+คน/บิล" หรือโหลดข้อมูลตัวอย่างด้านบน</p>
@@ -3514,14 +3662,7 @@
                 return;
             }
 
-            const board = document.getElementById('boardContainer');
-            if (board) {
-                const minBoardW = window.innerWidth < 640 ? 340 : 680;
-                const furthestX = Math.max(minBoardW, ...appState.members.map(m => m.x + CARD_WIDTH + 30));
-                const furthestY = Math.max(520, ...appState.members.map(m => m.y + getMemberCardHeight(m) + 45));
-                board.style.minWidth = `${furthestX}px`;
-                board.style.minHeight = `${furthestY}px`;
-            }
+            updateBoardCanvasSize(220, 220);
 
             layer.innerHTML = appState.members.map(m => {
                 const meta = ROLE_META[m.role] || ROLE_META.adult;
@@ -3538,7 +3679,7 @@
                 if (sponsors.length === 1) {
                     topPortLabel = `ดูแล: ${sponsors[0].name}`;
                 } else if (sponsors.length > 1) {
-                    topPortLabel = `ผู้ดูแล ${sponsors.length} คน (หาร ${sponsors.length})`;
+                    topPortLabel = `ผู้ดูแล ${sponsors.length} (หาร ${sponsors.length})`;
                 }
 
                 return `
@@ -3554,34 +3695,34 @@
                             data-memberid="${m.id}"
                             onclick="handleDependentPortClick(event, '${m.id}')"
                             onpointerup="if(dragState.sourceSponsorId) handleDependentPortClick(event, '${m.id}')"
-                            class="connection-port dependent-port-btn px-2 py-0.5 rounded-full text-[9px] font-semibold shadow-2xs border transition flex items-center gap-1 ${
+                            class="connection-port dependent-port-btn px-1.5 py-0.5 rounded-full text-[8.5px] font-semibold shadow-2xs border transition flex items-center gap-1 ${
                                 sponsors.length > 0
                                 ? 'bg-amber-500 text-white border-amber-600'
                                 : 'bg-white text-slate-600 border-slate-300 hover:border-indigo-500'
                             }">
-                            <span class="w-1.5 h-1.5 rounded-full ${sponsors.length > 0 ? 'bg-white' : 'bg-amber-500'}"></span>
-                            <span class="truncate max-w-[115px]">${escapeHtml(topPortLabel)}</span>
+                            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${sponsors.length > 0 ? 'bg-white' : 'bg-amber-500'}"></span>
+                            <span class="truncate max-w-[96px]">${escapeHtml(topPortLabel)}</span>
                         </button>
                     </div>
 
                     <!-- Card Header with Collapse/Expand Button -->
-                    <div class="px-2 pt-1.5 pb-1 flex items-center justify-between gap-1 ${isCollapsed ? '' : 'border-b border-slate-100'}">
+                    <div class="px-1.5 pt-1.5 pb-1 flex items-center justify-between gap-0.5 ${isCollapsed ? '' : 'border-b border-slate-100'}">
                         <div class="flex items-center gap-1 min-w-0">
-                            <span class="w-5 h-5 rounded-md ${meta.headerBg} text-white flex items-center justify-center text-[10px] shrink-0">
+                            <span class="w-4 h-4 rounded ${meta.headerBg} text-white flex items-center justify-center text-[8.5px] shrink-0">
                                 <i class="fa-solid ${meta.icon}"></i>
                             </span>
-                            <span class="font-bold text-[11px] text-slate-800 truncate" title="${escapeHtml(m.name)}">
+                            <span class="font-bold text-[10.5px] text-slate-800 truncate" title="${escapeHtml(m.name)}">
                                 ${escapeHtml(m.name)}
                             </span>
                         </div>
                         <div class="flex items-center shrink-0">
-                            <button onclick="toggleCardCollapse(event, '${m.id}')" class="w-5 h-5 rounded hover:bg-slate-100 text-slate-500 hover:text-indigo-600 flex items-center justify-center text-[10px]" title="${isCollapsed ? 'ขยายการ์ด' : 'ย่อการ์ด'}">
+                            <button onclick="toggleCardCollapse(event, '${m.id}')" class="w-4 h-4 rounded hover:bg-slate-100 text-slate-500 hover:text-indigo-600 flex items-center justify-center text-[9px]" title="${isCollapsed ? 'ขยายการ์ด' : 'ย่อการ์ด'}">
                                 <i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
                             </button>
-                            <button onclick="openPersonEditModal('${m.id}')" class="w-5 h-5 rounded hover:bg-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px]" title="แก้ไข">
+                            <button onclick="openPersonEditModal('${m.id}')" class="w-4 h-4 rounded hover:bg-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[9px]" title="แก้ไข">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button onclick="deleteMember('${m.id}')" class="w-5 h-5 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center text-[10px]" title="ลบ">
+                            <button onclick="deleteMember('${m.id}')" class="w-4 h-4 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center text-[9px]" title="ลบ">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
@@ -3589,31 +3730,31 @@
 
                     ${isCollapsed ? `
                         <!-- Collapsed Compact Summary Strip -->
-                        <div class="px-2 pb-2 pt-0.5 flex items-center justify-between text-[9px]">
-                            <span class="px-1.5 py-0.2 rounded border ${meta.badgeClass} font-semibold">${meta.label}</span>
-                            <span class="font-bold ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
-                                ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (มีคนดูแล)'}
+                        <div class="px-1.5 pb-1.5 pt-0.5 flex items-center justify-between gap-1 text-[8.5px]">
+                            <span class="px-1 py-0.2 rounded border ${meta.badgeClass} font-semibold shrink-0">${meta.label}</span>
+                            <span class="font-bold truncate ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
+                                ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (ดูแล)'}
                             </span>
                         </div>
                     ` : `
                         <!-- Expanded Body -->
-                        <div class="p-1.5 space-y-1 text-[10px]">
-                            <!-- Role & Family Quick Row -->
+                        <div class="p-1.5 space-y-1 text-[9.5px]">
+                            <!-- Role & % Quick Row -->
                             <div class="flex items-center justify-between gap-1">
                                 <select onchange="changeMemberRoleQuick('${m.id}', this.value)"
-                                    class="px-1.5 py-0.2 rounded border text-[9px] font-semibold ${meta.badgeClass} focus:outline-none cursor-pointer">
+                                    class="px-1 py-0.2 rounded border text-[8.5px] font-semibold ${meta.badgeClass} focus:outline-none cursor-pointer min-w-0">
                                     <option value="adult" ${m.role === 'adult' ? 'selected' : ''}>ผู้ใหญ่</option>
                                     <option value="child" ${m.role === 'child' ? 'selected' : ''}>เด็ก</option>
                                     <option value="senior" ${m.role === 'senior' ? 'selected' : ''}>ผู้สูงอายุ</option>
                                 </select>
-                                <button onclick="openPersonEditModal('${m.id}')" class="text-[9px] text-slate-500 hover:text-indigo-600 bg-slate-100 px-1 py-0.2 rounded font-medium">
-                                    🍲${m.foodPct}% 🏨${m.stayPct}%
+                                <button onclick="openPersonEditModal('${m.id}')" class="text-[8px] text-slate-500 hover:text-indigo-600 bg-slate-100 px-1 py-0.2 rounded font-medium shrink-0" title="ปรับสัดส่วน % อาหาร / ที่พัก">
+                                    🍲${m.foodPct} 🏨${m.stayPct}
                                 </button>
                             </div>
 
                             <!-- Family Mini Dropdown -->
                             <select onchange="changeMemberFamilyQuick('${m.id}', this.value)"
-                                class="w-full px-1.5 py-0.2 rounded border text-[9px] font-medium truncate cursor-pointer focus:outline-none ${
+                                class="w-full px-1 py-0.2 rounded border text-[8.5px] font-medium truncate cursor-pointer focus:outline-none ${
                                     famPal ? famPal.badgeBg : 'bg-slate-50 text-slate-500 border-slate-200'
                                 }">
                                 <option value="" ${!m.familyId ? 'selected' : ''}>-- ไม่สังกัดบ้าน --</option>
@@ -3624,20 +3765,20 @@
 
                             <!-- Compact Cost Box -->
                             <div class="px-1.5 py-1 rounded-lg bg-slate-50 border border-slate-100 space-y-0.5">
-                                <div class="flex justify-between text-slate-500 text-[9px]">
-                                    <span>ตัวเอง:</span>
-                                    <span class="font-medium text-slate-700">${formatShortCurrency(info.ownTotalCost)}</span>
+                                <div class="flex justify-between gap-1 text-slate-500 text-[8.5px]">
+                                    <span class="shrink-0">ตัวเอง:</span>
+                                    <span class="font-medium text-slate-700 truncate">${formatShortCurrency(info.ownTotalCost)}</span>
                                 </div>
-                                <div class="flex justify-between items-center border-t border-slate-200/60 pt-0.5">
-                                    <span class="font-medium text-slate-700 text-[9px]">จ่ายสุทธิ:</span>
-                                    <span class="font-bold text-[10px] ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
-                                        ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (มีคนดูแล)'}
+                                <div class="flex justify-between items-center gap-1 border-t border-slate-200/60 pt-0.5">
+                                    <span class="font-medium text-slate-700 text-[8.5px] shrink-0">สุทธิ:</span>
+                                    <span class="font-bold text-[9.5px] truncate ${info.netTotalPay > 0 ? 'text-indigo-700' : 'text-emerald-600'}">
+                                        ${info.netTotalPay > 0 ? formatShortCurrency(info.netTotalPay) : '฿0 (ดูแล)'}
                                     </span>
                                 </div>
                                 ${info.advancePaid > 0 ? `
-                                    <div class="flex justify-between items-center text-[9px] text-emerald-700 bg-emerald-50 px-1 rounded">
-                                        <span>ออกก่อน:</span>
-                                        <span class="font-semibold">${formatShortCurrency(info.advancePaid)}</span>
+                                    <div class="flex justify-between items-center gap-1 text-[8.5px] text-emerald-700 bg-emerald-50 px-1 rounded">
+                                        <span class="shrink-0">ออกก่อน:</span>
+                                        <span class="font-semibold truncate">${formatShortCurrency(info.advancePaid)}</span>
                                     </div>
                                 ` : ''}
                             </div>
@@ -3650,15 +3791,15 @@
                             id="sponsorPort_${m.id}"
                             onclick="handleSponsorPortClick(event, '${m.id}')"
                             onpointerdown="handleSponsorPortClick(event, '${m.id}')"
-                            class="connection-port px-2 py-0.5 rounded-full text-[9px] font-semibold shadow-2xs border transition flex items-center gap-1 ${
+                            class="connection-port px-1.5 py-0.5 rounded-full text-[8.5px] font-semibold shadow-2xs border transition flex items-center gap-1 ${
                                 isLinkingSource
                                 ? 'bg-rose-600 text-white border-rose-700 ring-2 ring-rose-200'
                                 : (info.coveredDependents.length > 0
                                     ? 'bg-indigo-600 text-white border-indigo-700'
                                     : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50')
                             }">
-                            <span>${isLinkingSource ? 'กำลังเชื่อม...' : `ดูแลจ่ายให้ (${info.coveredDependents.length})`}</span>
-                            <span class="w-1.5 h-1.5 rounded-full ${isLinkingSource || info.coveredDependents.length > 0 ? 'bg-white' : 'bg-indigo-600'}"></span>
+                            <span>${isLinkingSource ? 'กำลังเชื่อม...' : `ดูแลให้ (${info.coveredDependents.length})`}</span>
+                            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${isLinkingSource || info.coveredDependents.length > 0 ? 'bg-white' : 'bg-indigo-600'}"></span>
                         </button>
                     </div>
                 </div>
