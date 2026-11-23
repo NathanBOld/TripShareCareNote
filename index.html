@@ -115,9 +115,20 @@
 
             <!-- Action Buttons (Scrollable horizontally on mobile) -->
             <div class="flex items-center gap-1.5 overflow-x-auto max-w-full pb-0.5 sm:pb-0 no-scrollbar">
-                <button onclick="openShareDeployModal()" class="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0">
+                <!-- Live Room Quick Pill (Always-On Real-time) -->
+                <button onclick="copyRealtimeRoomLink()" id="headerRoomPill" title="แตะเพื่อคัดลอกลิงก์ห้อง Real-time ส่งให้เพื่อน"
+                    class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-mono font-bold transition flex items-center gap-1.5 shrink-0">
+                    <span id="headerLiveDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span id="headerRoomCodeText">TRIP-6152</span>
+                    <i class="fa-regular fa-copy text-[10px] opacity-70"></i>
+                </button>
+                <button onclick="openShareDeployModal(true)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0" title="กรอกเลขห้องเพื่อเข้าห้องเพื่อน">
+                    <i class="fa-solid fa-door-open"></i>
+                    <span>เข้าห้อง</span>
+                </button>
+                <button onclick="openShareDeployModal(false)" class="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0">
                     <i class="fa-solid fa-share-nodes"></i>
-                    <span>แชร์ทริปให้เพื่อน</span>
+                    <span>แชร์ทริป</span>
                 </button>
                 <button onclick="saveTripToCloud()" id="saveCloudBtn" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-xs shrink-0">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -530,44 +541,51 @@
             </div>
 
             <div class="overflow-y-auto pr-1 space-y-3.5 flex-1 text-xs">
-                <!-- Method 1: Cloud Room Code Sharing + Real-time Sync -->
+                <!-- Method 1: Always-On Real-time Room Sharing -->
                 <div class="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2.5">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-wrap items-center justify-between gap-1.5">
                         <span class="font-bold text-indigo-950 flex items-center gap-1.5 text-xs md:text-sm">
                             <span class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] flex items-center justify-center">1</span>
-                            แชร์ด้วย "รหัสห้องทริป (Cloud Room Code)" (ซิงค์ผ่านฐานข้อมูลกลาง)
+                            ห้องทริป Real-time อัตโนมัติ (แก้ไขพร้อมกันได้ทุกคน)
                         </span>
-                        <span id="liveRoomBadge" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-[10px]">พร้อมแชร์</span>
+                        <span id="liveRoomBadge" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-[10px]">🟢 ซิงค์อัตโนมัติทุกห้อง</span>
                     </div>
                     <p class="text-[11px] text-slate-600">
-                        เมื่อกด <strong>"อัปเดตขึ้นห้องแชร์ & คัดลอกรหัส"</strong> เพื่อนที่เปิดแอปนี้สามารถกรอกรหัสห้องเพื่อดึงข้อมูลชุดเดียวกันไปดูหรือแก้ไขต่อได้ทันที
+                        ทุกทริปเปิด <strong>Real-time อัตโนมัติทันทีไม่ต้องกดเปิดห้อง</strong> เพียงส่ง <strong>เลขห้อง</strong> หรือ <strong>ลิงก์ห้อง</strong> ให้เพื่อน ใครที่มีเลขห้องสามารถเข้ามาดูและช่วยแก้ไขได้พร้อมกันทุกคน
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-                        <!-- Box A: Publish & Copy Code / Real-time Link -->
+                        <!-- Box A: Current Room Code & Share Link -->
                         <div class="p-2.5 bg-white rounded-xl border border-indigo-200 space-y-2">
-                            <div class="text-[11px] font-semibold text-slate-700">รหัสห้องทริปของคุณ (แก้ชื่อรหัสได้):</div>
+                            <div class="text-[11px] font-semibold text-slate-700">เลขห้องปัจจุบัน (เปลี่ยนชื่อห้องได้):</div>
                             <div class="flex items-center gap-1.5">
                                 <input type="text" id="publicShareCodeDisplay"
                                     class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono font-bold text-indigo-700 text-xs text-center uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    value="TRIP-8899">
-                                <button onclick="publishTripToPublicShare()" id="publishShareBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i> เปิดห้อง Real-time
+                                    value="TRIP-6152">
+                                <button onclick="publishTripToPublicShare()" id="publishShareBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1" title="ใช้เลขห้องนี้และคัดลอกเลขห้อง">
+                                    <i class="fa-regular fa-copy"></i> คัดลอกเลขห้อง
                                 </button>
                             </div>
-                            <button onclick="copyRealtimeRoomLink()" class="w-full py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-medium text-[11px] flex items-center justify-center gap-1.5 transition">
-                                <i class="fa-solid fa-link"></i> คัดลอกลิงก์ห้อง Real-time (?room=...)
+                            <button onclick="copyRealtimeRoomLink()" class="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[11px] flex items-center justify-center gap-1.5 transition shadow-2xs">
+                                <i class="fa-solid fa-link"></i> คัดลอกลิงก์ห้อง Real-time ส่งให้เพื่อน
                             </button>
                         </div>
 
-                        <!-- Box B: Join by Friend's Code -->
+                        <!-- Box B: Join Any Room by Code -->
                         <div class="p-2.5 bg-white rounded-xl border border-indigo-200 space-y-2">
-                            <div class="text-[11px] font-semibold text-slate-700">มีรหัสห้องจากเพื่อน? กรอกเพื่อดึงข้อมูล:</div>
+                            <div class="text-[11px] font-semibold text-slate-700">มีเลขห้องจากเพื่อน? กรอกเพื่อเข้าแก้ไขร่วมกัน:</div>
                             <div class="flex items-center gap-1.5">
-                                <input type="text" id="joinShareCodeInput" placeholder="เช่น TRIP-8899"
+                                <input type="text" id="joinShareCodeInput" placeholder="เช่น TRIP-6152"
+                                    onkeydown="if(event.key==='Enter') loadTripByShareCode()"
                                     class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-xs uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 <button onclick="loadTripByShareCode()" id="joinShareBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-[11px] shrink-0 flex items-center gap-1">
-                                    <i class="fa-solid fa-download"></i> ดึงทริป
+                                    <i class="fa-solid fa-right-to-bracket"></i> เข้าห้อง
+                                </button>
+                            </div>
+                            <div id="createMissingRoomBox" class="hidden pt-1">
+                                <button onclick="createAndJoinCustomRoom()" id="createMissingRoomBtn"
+                                    class="w-full py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-medium text-[11px] flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-plus-circle"></i> สร้างห้องใหม่ด้วยเลขห้องนี้เลย
                                 </button>
                             </div>
                         </div>
@@ -913,51 +931,110 @@
         </div>
     </div>
 
-    <!-- Supabase SDK for Real-time PostgreSQL Database -->
+    <!-- Supabase SDK for Always-On Real-time PostgreSQL Database -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // =========================================================================
         // ตั้งค่า Supabase ส่วนตัวของคุณ (คัดลอกจาก Project Settings > API บน Supabase)
         // =========================================================================
         const SUPABASE_URL = 'https://yxomqcougpalczhfrciq.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_HV_mXWILf5qUJarb1XuQcA_xheJXR0b';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY';
 
         const isSupabaseConfigured =
             SUPABASE_URL &&
             SUPABASE_ANON_KEY &&
-            !SUPABASE_URL.includes('YOUR_PROJECT_ID') &&
-            !SUPABASE_ANON_KEY.includes('YOUR_ANON_PUBLIC_KEY');
+            !SUPABASE_URL.includes('https://yxomqcougpalczhfrciq.supabase.co') &&
+            !SUPABASE_ANON_KEY.includes('sb_publishable_HV_mXWILf5qUJarb1XuQcA_xheJXR0b');
 
         const supabaseClient = isSupabaseConfigured && window.supabase
-            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                realtime: { params: { eventsPerSecond: 10 } }
+            })
             : null;
+
+        // Unique ID per browser tab to ignore our own real-time echoes (immune to device clock skew)
+        const CLIENT_SESSION_ID = 'cli_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
 
         window.cloudDb = {
             db: supabaseClient,
-            provider: isSupabaseConfigured ? 'Supabase PostgreSQL (Real-time)' : 'In-Memory Session (รอใส่ Supabase Key)',
+            clientId: CLIENT_SESSION_ID,
+            provider: isSupabaseConfigured ? 'Supabase PostgreSQL (Always-On Real-time)' : 'In-Memory Session (รอใส่ Supabase Key)',
             savedTrips: [],
             sharedRoomsMemory: {},
             activeRoomChannel: null,
             activeRoomCode: null,
+            connectionStatus: isSupabaseConfigured ? 'CONNECTING' : 'LOCAL',
             lastSyncedAt: 0,
+            isHydrating: false,
             isReceivingRemoteUpdate: false
         };
 
-        function updateLiveRoomIndicator(roomCode) {
+        function normalizeRoomCode(code) {
+            const clean = String(code || '')
+                .trim()
+                .toUpperCase()
+                .replace(/[^A-Z0-9_-]/g, '');
+            return clean || ('TRIP-' + Math.floor(1000 + Math.random() * 9000));
+        }
+
+        function updateLiveRoomIndicator(roomCode, status = null) {
+            if (status) window.cloudDb.connectionStatus = status;
+            const currentStatus = window.cloudDb.connectionStatus;
+            const displayCode = roomCode || window.cloudDb.activeRoomCode || 'TRIP-6152';
+
+            // 1. Header Room Pill
+            const headerCode = document.getElementById('headerRoomCodeText');
+            const headerDot = document.getElementById('headerLiveDot');
+            if (headerCode) headerCode.textContent = displayCode;
+            if (headerDot) {
+                if (currentStatus === 'SUBSCRIBED') {
+                    headerDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                } else if (currentStatus === 'SYNCING') {
+                    headerDot.className = 'w-2 h-2 rounded-full bg-indigo-500 animate-ping';
+                } else if (currentStatus === 'LOCAL') {
+                    headerDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                } else {
+                    headerDot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+                }
+            }
+
+            // 2. Board Toolbar Pill
             const pill = document.getElementById('realtimeStatusPill');
             const text = document.getElementById('realtimeStatusText');
-            if (!pill || !text) return;
-            if (roomCode) {
-                text.textContent = `LIVE: ${roomCode}`;
-                pill.classList.remove('hidden');
-                pill.classList.add('inline-flex');
-            } else {
-                pill.classList.add('hidden');
-                pill.classList.remove('inline-flex');
+            if (pill && text) {
+                if (currentStatus === 'SUBSCRIBED') {
+                    text.textContent = `LIVE: ${displayCode}`;
+                    pill.className = 'inline-flex px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold items-center gap-1';
+                } else if (currentStatus === 'SYNCING') {
+                    text.textContent = `กำลังซิงค์: ${displayCode}`;
+                    pill.className = 'inline-flex px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-semibold items-center gap-1';
+                } else if (currentStatus === 'LOCAL') {
+                    text.textContent = `LOCAL: ${displayCode}`;
+                    pill.className = 'inline-flex px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold items-center gap-1';
+                } else {
+                    text.textContent = `เชื่อมต่อ: ${displayCode}`;
+                    pill.className = 'inline-flex px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold items-center gap-1';
+                }
+            }
+
+            // 3. Share Modal Badge & Input
+            const badge = document.getElementById('liveRoomBadge');
+            if (badge) {
+                if (currentStatus === 'SUBSCRIBED') {
+                    badge.textContent = `🟢 ห้อง ${displayCode} ซิงค์ Real-time อยู่`;
+                    badge.className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-[10px]';
+                } else if (currentStatus === 'LOCAL') {
+                    badge.textContent = `🟡 โหมดทดสอบ (ยังไม่ได้ใส่ Supabase Key)`;
+                    badge.className = 'px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold text-[10px]';
+                } else {
+                    badge.textContent = `🔄 กำลังเชื่อมต่อห้อง ${displayCode}...`;
+                    badge.className = 'px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-[10px]';
+                }
             }
         }
 
-        async function initSupabaseDatabase() {
+        // Load list of all saved rooms/trips for "ทริปที่บันทึกไว้"
+        window.refreshSavedTripsList = async function() {
             if (!supabaseClient) return;
             try {
                 const { data, error } = await supabaseClient
@@ -966,112 +1043,153 @@
                     .order('updated_at', { ascending: false });
 
                 if (!error && data) {
-                    window.cloudDb.savedTrips = data.map(row => row.data).filter(Boolean);
+                    window.cloudDb.savedTrips = data.map(row => {
+                        const d = row.data || {};
+                        return {
+                            ...d,
+                            id: row.id,
+                            shareRoomCode: row.room_code || d.shareRoomCode || normalizeRoomCode(row.id),
+                            tripName: row.trip_name || d.tripName || 'ทริปไม่มีชื่อ',
+                            updatedAt: row.updated_at || d.updatedAt || Date.now()
+                        };
+                    });
                     if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
                 }
             } catch (e) {
-                console.warn('Supabase init warning:', e);
+                console.warn('Supabase list refresh warning:', e);
             }
-        }
+        };
 
-        window.persistTripDoc = async function(tripPayload) {
+        // Unified Save & Real-time Push: EVERY trip is stored by its room_code so there are never UNIQUE conflicts
+        window.syncRoomToCloud = async function(shareCode, tripPayload) {
+            const cleanCode = normalizeRoomCode(shareCode || tripPayload.shareRoomCode);
             const now = Date.now();
-            tripPayload.updatedAt = now;
-            window.cloudDb.lastSyncedAt = now;
+            const unifiedId = 'room_' + cleanCode;
 
-            // Update local memory immediately
-            const idx = window.cloudDb.savedTrips.findIndex(t => t.id === tripPayload.id);
+            tripPayload.id = unifiedId;
+            tripPayload.shareRoomCode = cleanCode;
+            tripPayload.updatedAt = now;
+            tripPayload.lastEditedBy = CLIENT_SESSION_ID;
+
+            window.cloudDb.lastSyncedAt = now;
+            window.cloudDb.sharedRoomsMemory[cleanCode] = tripPayload;
+
+            // Update local savedTrips cache immediately
+            const idx = window.cloudDb.savedTrips.findIndex(t => t.shareRoomCode === cleanCode || t.id === unifiedId);
             if (idx >= 0) window.cloudDb.savedTrips[idx] = tripPayload;
             else window.cloudDb.savedTrips.unshift(tripPayload);
             if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
 
-            if (!supabaseClient) return true;
-
-            const { error } = await supabaseClient.from('trips').upsert({
-                id: tripPayload.id,
-                room_code: tripPayload.shareRoomCode || null,
-                trip_name: tripPayload.tripName || 'ทริปไม่มีชื่อ',
-                data: tripPayload,
-                updated_at: now
-            });
-
-            if (error) throw error;
-            await initSupabaseDatabase();
-            return true;
-        };
-
-        window.removeTripDoc = async function(tripId) {
-            window.cloudDb.savedTrips = window.cloudDb.savedTrips.filter(t => t.id !== tripId);
-            if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
-
-            if (!supabaseClient) return true;
-            await supabaseClient.from('trips').delete().eq('id', tripId);
-            await initSupabaseDatabase();
-            return true;
-        };
-
-        window.publishSharedTripRoom = async function(shareCode, tripPayload) {
-            const cleanCode = String(shareCode).trim().toUpperCase();
-            const now = Date.now();
-            tripPayload.shareRoomCode = cleanCode;
-            tripPayload.updatedAt = now;
-            window.cloudDb.lastSyncedAt = now;
-            window.cloudDb.sharedRoomsMemory[cleanCode] = tripPayload;
-
             if (!supabaseClient) {
                 window.cloudDb.activeRoomCode = cleanCode;
-                updateLiveRoomIndicator(cleanCode + ' (Local)');
+                updateLiveRoomIndicator(cleanCode, 'LOCAL');
                 return true;
             }
 
+            updateLiveRoomIndicator(cleanCode, 'SYNCING');
             const { error } = await supabaseClient.from('trips').upsert({
-                id: 'room_' + cleanCode,
+                id: unifiedId,
                 room_code: cleanCode,
                 trip_name: tripPayload.tripName || 'ทริปไม่มีชื่อ',
                 data: tripPayload,
                 updated_at: now
             }, { onConflict: 'room_code' });
 
-            if (error) throw error;
+            if (error) {
+                updateLiveRoomIndicator(cleanCode, 'ERROR');
+                throw error;
+            }
+
+            // Ensure we are subscribed to this room for real-time updates
             window.subscribeToSharedRoom(cleanCode);
+            updateLiveRoomIndicator(cleanCode, 'SUBSCRIBED');
+            window.refreshSavedTripsList();
             return true;
         };
 
-        window.fetchSharedTripRoom = async function(shareCode) {
-            const cleanCode = String(shareCode).trim().toUpperCase();
+        // Backward-compatible aliases pointing to unified syncRoomToCloud
+        window.persistTripDoc = async function(tripPayload) {
+            return window.syncRoomToCloud(tripPayload.shareRoomCode, tripPayload);
+        };
+
+        window.publishSharedTripRoom = async function(shareCode, tripPayload) {
+            return window.syncRoomToCloud(shareCode, tripPayload);
+        };
+
+        window.removeTripDoc = async function(tripIdOrCode) {
+            window.cloudDb.savedTrips = window.cloudDb.savedTrips.filter(
+                t => t.id !== tripIdOrCode && t.shareRoomCode !== tripIdOrCode
+            );
+            if (window.updateSavedTripsBadge) window.updateSavedTripsBadge();
+
+            if (!supabaseClient) return true;
+            await supabaseClient.from('trips').delete().eq('id', tripIdOrCode);
+            await window.refreshSavedTripsList();
+            return true;
+        };
+
+        // Fetch existing room from Supabase (returns null if room does not exist yet)
+        window.fetchSharedTripRoom = async function(shareCode, autoSubscribe = true) {
+            const cleanCode = normalizeRoomCode(shareCode);
             if (!supabaseClient) {
-                return window.cloudDb.sharedRoomsMemory[cleanCode] || null;
+                const mem = window.cloudDb.sharedRoomsMemory[cleanCode] || null;
+                if (mem && autoSubscribe) updateLiveRoomIndicator(cleanCode, 'LOCAL');
+                return mem;
             }
 
             const { data, error } = await supabaseClient
                 .from('trips')
-                .select('data')
+                .select('id, room_code, trip_name, data, updated_at')
                 .eq('room_code', cleanCode)
-                .single();
+                .maybeSingle();
 
             if (error || !data || !data.data) {
                 return window.cloudDb.sharedRoomsMemory[cleanCode] || null;
             }
 
-            window.cloudDb.lastSyncedAt = data.data.updatedAt || Date.now();
-            window.subscribeToSharedRoom(cleanCode);
-            return data.data;
+            const merged = {
+                ...data.data,
+                id: data.id,
+                shareRoomCode: data.room_code || cleanCode,
+                tripName: data.trip_name || data.data.tripName || 'ทริปไม่มีชื่อ',
+                updatedAt: data.updated_at || data.data.updatedAt || Date.now()
+            };
+
+            window.cloudDb.lastSyncedAt = merged.updatedAt;
+            if (autoSubscribe) window.subscribeToSharedRoom(cleanCode);
+            return merged;
         };
 
-        window.subscribeToSharedRoom = function(shareCode) {
-            const cleanCode = String(shareCode).trim().toUpperCase();
-            if (!supabaseClient) return;
+        // Always-On Real-time Subscription for ANY room code
+        window.subscribeToSharedRoom = function(shareCode, forceReconnect = false) {
+            const cleanCode = normalizeRoomCode(shareCode);
+            window.cloudDb.activeRoomCode = cleanCode;
 
-            if (window.cloudDb.activeRoomChannel && window.cloudDb.activeRoomCode === cleanCode) {
-                return; // Already subscribed to this room
+            // Keep URL cleanly synced to ?room=CODE
+            try {
+                const currentParams = new URLSearchParams(window.location.search);
+                if (currentParams.get('room') !== cleanCode) {
+                    const newUrl = `${window.location.pathname}?room=${encodeURIComponent(cleanCode)}`;
+                    window.history.replaceState(null, '', newUrl);
+                }
+            } catch (e) {}
+
+            if (!supabaseClient) {
+                updateLiveRoomIndicator(cleanCode, 'LOCAL');
+                return;
+            }
+
+            if (!forceReconnect && window.cloudDb.activeRoomChannel && window.cloudDb.activeRoomChannel.topic === 'realtime:room_' + cleanCode && window.cloudDb.connectionStatus === 'SUBSCRIBED') {
+                updateLiveRoomIndicator(cleanCode, 'SUBSCRIBED');
+                return;
             }
 
             if (window.cloudDb.activeRoomChannel) {
                 supabaseClient.removeChannel(window.cloudDb.activeRoomChannel);
+                window.cloudDb.activeRoomChannel = null;
             }
 
-            window.cloudDb.activeRoomCode = cleanCode;
-            updateLiveRoomIndicator(cleanCode);
+            updateLiveRoomIndicator(cleanCode, 'CONNECTING');
 
             window.cloudDb.activeRoomChannel = supabaseClient
                 .channel('room_' + cleanCode)
@@ -1081,29 +1199,72 @@
                     table: 'trips',
                     filter: `room_code=eq.${cleanCode}`
                 }, (payload) => {
-                    const remoteTrip = payload.new?.data;
-                    if (remoteTrip && remoteTrip.updatedAt > window.cloudDb.lastSyncedAt) {
-                        window.cloudDb.lastSyncedAt = remoteTrip.updatedAt;
-                        window.cloudDb.isReceivingRemoteUpdate = true;
+                    const row = payload.new;
+                    const remoteTrip = row?.data;
+                    if (!remoteTrip) return;
+
+                    // Ignore echoes caused by THIS browser tab
+                    if (remoteTrip.lastEditedBy === CLIENT_SESSION_ID) return;
+
+                    window.cloudDb.lastSyncedAt = row.updated_at || remoteTrip.updatedAt || Date.now();
+                    window.cloudDb.isReceivingRemoteUpdate = true;
+                    try {
                         if (window.applyImportedTripObject) {
-                            window.applyImportedTripObject(remoteTrip);
+                            window.applyImportedTripObject({
+                                ...remoteTrip,
+                                id: row.id || remoteTrip.id,
+                                shareRoomCode: row.room_code || cleanCode,
+                                tripName: row.trip_name || remoteTrip.tripName
+                            }, { fromRemote: true });
                             if (window.showToast) {
-                                window.showToast(`อัปเดตข้อมูลล่าสุดจากห้อง ${cleanCode} แล้ว`);
+                                window.showToast(`🔄 ซิงค์ข้อมูลล่าสุดในห้อง ${cleanCode} แล้ว`);
                             }
                         }
+                    } finally {
                         window.cloudDb.isReceivingRemoteUpdate = false;
                     }
                 })
-                .subscribe();
-
-            // Update URL cleanly to ?room=CODE for easy sharing
-            try {
-                const newUrl = `${window.location.pathname}?room=${encodeURIComponent(cleanCode)}`;
-                window.history.replaceState(null, '', newUrl);
-            } catch (e) {}
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        updateLiveRoomIndicator(cleanCode, 'SUBSCRIBED');
+                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                        updateLiveRoomIndicator(cleanCode, 'RECONNECTING');
+                    }
+                });
         };
 
-        initSupabaseDatabase();
+        // Mobile / iOS Safari resilience: when returning from LINE or regaining network,
+        // automatically re-fetch the latest room state and ensure Realtime stays connected.
+        async function resyncActiveRoomOnResume() {
+            if (!supabaseClient || !window.cloudDb.activeRoomCode) return;
+            const code = window.cloudDb.activeRoomCode;
+            try {
+                const latest = await window.fetchSharedTripRoom(code, false);
+                if (latest && latest.lastEditedBy !== CLIENT_SESSION_ID && (latest.updatedAt || 0) > window.cloudDb.lastSyncedAt) {
+                    window.cloudDb.lastSyncedAt = latest.updatedAt;
+                    window.cloudDb.isReceivingRemoteUpdate = true;
+                    if (window.applyImportedTripObject) {
+                        window.applyImportedTripObject(latest, { fromRemote: true });
+                        if (window.showToast) window.showToast(`🔄 อัปเดตข้อมูลล่าสุดของห้อง ${code} แล้ว`);
+                    }
+                    window.cloudDb.isReceivingRemoteUpdate = false;
+                }
+                window.subscribeToSharedRoom(code, true);
+            } catch (e) {
+                console.warn('Resume resync warning:', e);
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                resyncActiveRoomOnResume();
+            }
+        });
+        window.addEventListener('online', () => {
+            resyncActiveRoomOnResume();
+        });
+
+        window.refreshSavedTripsList();
     </script>
 
     <script>
@@ -1331,51 +1492,26 @@
             const btn = document.getElementById('saveCloudBtn');
             if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังบันทึก...</span>`;
 
-            // Ensure saving a modified demo trip creates/uses a dedicated persistent ID if needed
-            if (!appState.currentTripId || appState.currentTripId === 'trip_demo_1') {
-                appState.currentTripId = 'trip_' + Date.now();
-            }
-
-            const calc = calculateTripShares();
-            const payload = {
-                id: appState.currentTripId,
-                shareRoomCode: appState.shareRoomCode || 'TRIP-8899',
-                tripName: appState.tripName || 'ทริปไม่มีชื่อ',
-                autoFamilySponsorRule: Boolean(appState.autoFamilySponsorRule),
-                roleRates: appState.roleRates,
-                baseFoodExpense: Number(appState.baseFoodExpense) || 0,
-                baseFoodPayerId: appState.baseFoodPayerId || '',
-                baseStayExpense: Number(appState.baseStayExpense) || 0,
-                baseStayPayerId: appState.baseStayPayerId || '',
-                subExpenses: appState.subExpenses,
-                families: appState.families,
-                members: appState.members,
-                summaryFoodTotal: Number(calc.totalFood.toFixed(2)),
-                summaryStayTotal: Number(calc.totalStay.toFixed(2)),
-                summaryGrandTotal: Number(calc.grandTotal.toFixed(2)),
-                updatedAt: Date.now()
-            };
+            appState.shareRoomCode = normalizeRoomCode(appState.shareRoomCode);
+            appState.currentTripId = 'room_' + appState.shareRoomCode;
+            const payload = buildCompactSharePayload();
 
             try {
-                if (window.persistTripDoc) {
-                    await window.persistTripDoc(payload);
+                if (window.syncRoomToCloud) {
+                    await window.syncRoomToCloud(appState.shareRoomCode, payload);
                 }
-                // Also sync URL hash silently so bookmarking/refreshing the URL keeps the exact state
-                try {
-                    const token = encodeTripToBase64Token(payload);
-                    window.history.replaceState(null, '', `#trip=${token}`);
-                } catch (hashErr) {}
-
-                showToast(`บันทึกทริป "${payload.tripName}" ลงฐานข้อมูลเรียบร้อยแล้ว!`);
+                showToast(`บันทึกและซิงค์ห้อง "${appState.shareRoomCode}" เรียบร้อยแล้ว!`);
             } catch (err) {
                 console.error("Save error:", err);
-                showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                const detail = err?.message || err?.details || '';
+                showToast(`บันทึกไม่สำเร็จ${detail ? ': ' + detail : ''}`);
             } finally {
                 if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกทริป</span>`;
             }
         }
 
-        function openSavedTripsModal() {
+        async function openSavedTripsModal() {
+            if (window.refreshSavedTripsList) await window.refreshSavedTripsList();
             renderSavedTripsList();
             const modal = document.getElementById('savedTripsModal');
             modal.classList.remove('hidden');
@@ -1388,22 +1524,56 @@
             modal.classList.remove('flex');
         }
 
-        function createNewBlankTrip() {
-            appState.currentTripId = 'trip_' + Date.now();
-            appState.shareRoomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
+        async function createNewBlankTrip(customRoomCode = null) {
+            const newCode = normalizeRoomCode(customRoomCode || ('TRIP-' + Math.floor(1000 + Math.random() * 9000)));
+            appState.shareRoomCode = newCode;
+            appState.currentTripId = 'room_' + newCode;
             appState.tripName = 'ทริปใหม่ ' + new Date().toLocaleDateString('th-TH');
             document.getElementById('tripNameInput').value = appState.tripName;
-            clearBoard();
+
+            window.cloudDb.isHydrating = true;
+            appState.members = [];
+            appState.families = [];
+            appState.subExpenses = [];
+            appState.baseFoodExpense = 0;
+            appState.baseFoodPayerId = '';
+            appState.baseStayExpense = 0;
+            appState.baseStayPayerId = '';
+            document.getElementById('baseFoodInput').value = 0;
+            document.getElementById('baseStayInput').value = 0;
+            cancelActiveConnection();
+            updateAllViews();
+            window.cloudDb.isHydrating = false;
+
+            // Immediately register & subscribe this brand-new room as Real-time LIVE
+            try {
+                const payload = buildCompactSharePayload();
+                if (window.syncRoomToCloud) await window.syncRoomToCloud(newCode, payload);
+            } catch (e) {
+                console.warn('New room sync warning:', e);
+            }
+            if (window.subscribeToSharedRoom) window.subscribeToSharedRoom(newCode);
+
             closeSavedTripsModal();
-            showToast('สร้างกระดานทริปใหม่เรียบร้อยแล้ว');
+            closeShareDeployModal();
+            showToast(`สร้างห้องใหม่ "${newCode}" พร้อมใช้งาน Real-time ทันที!`);
         }
 
-        function loadTripFromSaved(tripId) {
-            const found = (window.cloudDb?.savedTrips || []).find(t => t.id === tripId);
+        async function loadTripFromSaved(tripId) {
+            const found = (window.cloudDb?.savedTrips || []).find(t => t.id === tripId || t.shareRoomCode === tripId);
             if (!found) return;
-            applyImportedTripObject(found);
+
+            const roomCode = normalizeRoomCode(found.shareRoomCode || found.id);
+            // Fetch freshest version from Supabase before displaying
+            let latest = found;
+            if (window.fetchSharedTripRoom) {
+                const remote = await window.fetchSharedTripRoom(roomCode, false);
+                if (remote) latest = remote;
+            }
+            applyImportedTripObject({ ...latest, shareRoomCode: roomCode }, { fromRemote: true });
+            if (window.subscribeToSharedRoom) window.subscribeToSharedRoom(roomCode);
             closeSavedTripsModal();
-            showToast(`โหลดทริป "${appState.tripName}" เรียบร้อยแล้ว`);
+            showToast(`เข้าห้อง "${roomCode}" (${appState.tripName}) แบบ Real-time แล้ว`);
         }
 
         async function deleteSavedTrip(tripId) {
@@ -1419,10 +1589,13 @@
          **************************************************************/
         function buildCompactSharePayload() {
             const calc = calculateTripShares();
+            const roomCode = normalizeRoomCode(appState.shareRoomCode);
+            appState.shareRoomCode = roomCode;
+            appState.currentTripId = 'room_' + roomCode;
             return {
-                id: appState.currentTripId || ('trip_' + Date.now()),
-                shareRoomCode: (document.getElementById('publicShareCodeDisplay')?.value || appState.shareRoomCode || 'TRIP-8899').trim().toUpperCase(),
-                tripName: appState.tripName,
+                id: appState.currentTripId,
+                shareRoomCode: roomCode,
+                tripName: appState.tripName || 'ทริปไม่มีชื่อ',
                 autoFamilySponsorRule: Boolean(appState.autoFamilySponsorRule),
                 roleRates: appState.roleRates,
                 baseFoodExpense: Number(appState.baseFoodExpense) || 0,
@@ -1432,6 +1605,8 @@
                 subExpenses: appState.subExpenses,
                 families: appState.families,
                 members: appState.members,
+                summaryFoodTotal: Number(calc.totalFood.toFixed(2)),
+                summaryStayTotal: Number(calc.totalStay.toFixed(2)),
                 summaryGrandTotal: Number(calc.grandTotal.toFixed(2)),
                 updatedAt: Date.now()
             };
@@ -1491,12 +1666,13 @@
             return currentHref;
         }
 
-        function openShareDeployModal() {
-            if (!appState.shareRoomCode) {
-                appState.shareRoomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
-            }
+        function openShareDeployModal(focusJoinInput = false) {
+            appState.shareRoomCode = normalizeRoomCode(appState.shareRoomCode);
             const codeEl = document.getElementById('publicShareCodeDisplay');
             if (codeEl) codeEl.value = appState.shareRoomCode;
+
+            const missingBox = document.getElementById('createMissingRoomBox');
+            if (missingBox) missingBox.classList.add('hidden');
 
             const baseInput = document.getElementById('customPublicBaseUrlInput');
             if (baseInput) {
@@ -1506,9 +1682,18 @@
                 }
             }
 
+            updateLiveRoomIndicator(appState.shareRoomCode);
+
             const modal = document.getElementById('shareDeployModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+
+            if (focusJoinInput) {
+                setTimeout(() => {
+                    const joinInput = document.getElementById('joinShareCodeInput');
+                    if (joinInput) joinInput.focus();
+                }, 80);
+            }
         }
 
         function closeShareDeployModal() {
@@ -1519,80 +1704,99 @@
 
         async function publishTripToPublicShare() {
             const codeEl = document.getElementById('publicShareCodeDisplay');
-            let customCode = (codeEl ? codeEl.value.trim().toUpperCase() : '');
-            if (!customCode) {
-                customCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
-                if (codeEl) codeEl.value = customCode;
-            }
+            const customCode = normalizeRoomCode(codeEl ? codeEl.value : appState.shareRoomCode);
+            if (codeEl) codeEl.value = customCode;
             appState.shareRoomCode = customCode;
 
             const btn = document.getElementById('publishShareBtn');
-            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลด...`;
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ซิงค์...`;
 
             const payload = buildCompactSharePayload();
 
             try {
-                if (window.publishSharedTripRoom) {
-                    await window.publishSharedTripRoom(appState.shareRoomCode, payload);
+                if (window.syncRoomToCloud) {
+                    await window.syncRoomToCloud(appState.shareRoomCode, payload);
                 }
                 copyTextToClipboard(appState.shareRoomCode);
-                const badge = document.getElementById('liveRoomBadge');
-                if (badge) {
-                    badge.textContent = `อัปเดตห้อง ${appState.shareRoomCode} แล้ว`;
-                    badge.className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-[10px]';
-                }
-                showToast(`อัปเดตทริปขึ้นห้อง "${appState.shareRoomCode}" และคัดลอกรหัสแล้ว!`);
+                showToast(`คัดลอกเลขห้อง "${appState.shareRoomCode}" แล้ว! ส่งให้เพื่อนกรอกเข้าห้องได้เลย`);
             } catch (e) {
-                showToast('เกิดข้อผิดพลาดในการสร้างรหัสแชร์');
+                console.error("Sync room error:", e);
+                const detail = e?.message || e?.details || '';
+                showToast(`ซิงค์ห้องไม่สำเร็จ${detail ? ': ' + detail : ''}`);
             } finally {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> เปิดห้อง Real-time`;
+                if (btn) btn.innerHTML = `<i class="fa-regular fa-copy"></i> คัดลอกเลขห้อง`;
             }
         }
 
         async function copyRealtimeRoomLink() {
+            const modal = document.getElementById('shareDeployModal');
+            const isModalOpen = modal && !modal.classList.contains('hidden');
             const codeEl = document.getElementById('publicShareCodeDisplay');
-            let customCode = (codeEl ? codeEl.value.trim().toUpperCase() : appState.shareRoomCode || 'TRIP-8899');
-            if (!customCode) customCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
+            const customCode = normalizeRoomCode(isModalOpen && codeEl ? codeEl.value : appState.shareRoomCode);
+
             appState.shareRoomCode = customCode;
             if (codeEl) codeEl.value = customCode;
 
             try {
                 const payload = buildCompactSharePayload();
-                if (window.publishSharedTripRoom) {
-                    await window.publishSharedTripRoom(customCode, payload);
+                if (window.syncRoomToCloud) {
+                    await window.syncRoomToCloud(customCode, payload);
                 }
                 const baseUrl = getEffectiveShareBaseUrl();
                 const roomUrl = `${baseUrl}?room=${encodeURIComponent(customCode)}`;
                 copyTextToClipboard(roomUrl);
-                showToast(`คัดลอกลิงก์ห้อง Real-time (${customCode}) แล้ว ส่งให้เพื่อนเปิดดูพร้อมกันได้เลย!`);
+                showToast(`คัดลอกลิงก์ห้อง Real-time (${customCode}) แล้ว ส่งให้เพื่อนเปิดช่วยกันแก้ได้เลย!`);
             } catch (e) {
-                showToast('ไม่สามารถสร้างลิงก์ห้อง Real-time ได้ กรุณาตรวจสอบการตั้งค่า Supabase');
+                console.error("Copy room link error:", e);
+                const detail = e?.message || e?.details || '';
+                showToast(`คัดลอกลิงก์ไม่สำเร็จ${detail ? ': ' + detail : ''}`);
             }
         }
 
         async function loadTripByShareCode() {
             const input = document.getElementById('joinShareCodeInput');
-            const code = (input ? input.value.trim().toUpperCase() : '');
-            if (!code) {
-                showToast('กรุณากรอกรหัสห้องทริป เช่น TRIP-8899');
+            const rawCode = input ? input.value.trim() : '';
+            if (!rawCode) {
+                showToast('กรุณากรอกเลขห้องทริป เช่น TRIP-6152');
                 return;
             }
+            const code = normalizeRoomCode(rawCode);
             const btn = document.getElementById('joinShareBtn');
+            const missingBox = document.getElementById('createMissingRoomBox');
+            if (missingBox) missingBox.classList.add('hidden');
             if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
             try {
-                const found = window.fetchSharedTripRoom ? await window.fetchSharedTripRoom(code) : null;
+                const found = window.fetchSharedTripRoom ? await window.fetchSharedTripRoom(code, true) : null;
                 if (!found) {
-                    showToast(`ไม่พบรหัสห้อง "${code}" ในระบบ หรือลองใช้ "โค้ดข้อมูลทริป" ด้านล่างแทน`);
+                    if (missingBox) {
+                        const createBtn = document.getElementById('createMissingRoomBtn');
+                        if (createBtn) {
+                            createBtn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> สร้างห้องใหม่ชื่อ "${escapeHtml(code)}" และเริ่มใช้งาน Real-time`;
+                        }
+                        missingBox.classList.remove('hidden');
+                    }
+                    showToast(`ไม่พบห้อง "${code}" ในระบบ — กดปุ่มสีเหลืองด้านล่างเพื่อสร้างห้องนี้ใหม่ได้ทันที`);
                     return;
                 }
-                applyImportedTripObject(found);
+                applyImportedTripObject({ ...found, shareRoomCode: code }, { fromRemote: true });
+                if (input) input.value = '';
                 closeShareDeployModal();
-                showToast(`โหลดทริป "${found.tripName}" จากรหัสห้อง ${code} สำเร็จ!`);
+                showToast(`เข้าห้อง "${code}" (${found.tripName}) แบบ Real-time แล้ว ทุกคนเห็นพร้อมกัน!`);
             } catch (e) {
-                showToast('ไม่สามารถดึงข้อมูลจากรหัสแชร์ได้');
+                console.error("Join room error:", e);
+                showToast('ไม่สามารถเชื่อมต่อห้องนี้ได้ กรุณาลองใหม่อีกครั้ง');
             } finally {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-download"></i> ดึงทริป`;
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> เข้าห้อง`;
             }
+        }
+
+        async function createAndJoinCustomRoom() {
+            const input = document.getElementById('joinShareCodeInput');
+            const rawCode = input ? input.value.trim() : '';
+            if (!rawCode) return;
+            await createNewBlankTrip(rawCode);
+            if (input) input.value = '';
         }
 
         function copyShareableUrlLink() {
@@ -1694,30 +1898,54 @@
             event.target.value = '';
         }
 
-        function applyImportedTripObject(found) {
-            appState.currentTripId = found.id || ('trip_' + Date.now());
-            appState.shareRoomCode = found.shareRoomCode || appState.shareRoomCode;
-            appState.tripName = found.tripName || 'ทริปที่นำเข้า';
-            appState.autoFamilySponsorRule = found.autoFamilySponsorRule !== undefined ? Boolean(found.autoFamilySponsorRule) : true;
-            appState.roleRates = found.roleRates || appState.roleRates;
-            appState.baseFoodExpense = Number(found.baseFoodExpense) || 0;
-            appState.baseFoodPayerId = found.baseFoodPayerId || '';
-            appState.baseStayExpense = Number(found.baseStayExpense) || 0;
-            appState.baseStayPayerId = found.baseStayPayerId || '';
-            appState.subExpenses = Array.isArray(found.subExpenses) ? found.subExpenses : [];
-            appState.families = Array.isArray(found.families) ? found.families : [];
-            appState.members = Array.isArray(found.members) ? found.members.map(m => ({
-                ...m,
-                collapsed: Boolean(m.collapsed)
-            })) : [];
+        function applyImportedTripObject(found, options = {}) {
+            const isRemote = Boolean(options.fromRemote);
+            if (isRemote && window.cloudDb) window.cloudDb.isHydrating = true;
 
-            const toggleEl = document.getElementById('autoFamilySponsorToggle');
-            if (toggleEl) toggleEl.checked = appState.autoFamilySponsorRule;
-            document.getElementById('tripNameInput').value = appState.tripName;
-            document.getElementById('baseFoodInput').value = appState.baseFoodExpense;
-            document.getElementById('baseStayInput').value = appState.baseStayExpense;
-            updateCollapseButtonUI();
-            updateAllViews();
+            try {
+                const roomCode = normalizeRoomCode(found.shareRoomCode || appState.shareRoomCode);
+                appState.shareRoomCode = roomCode;
+                appState.currentTripId = 'room_' + roomCode;
+                appState.tripName = found.tripName || 'ทริปที่นำเข้า';
+                appState.autoFamilySponsorRule = found.autoFamilySponsorRule !== undefined ? Boolean(found.autoFamilySponsorRule) : true;
+                appState.roleRates = found.roleRates || appState.roleRates;
+                appState.baseFoodExpense = Number(found.baseFoodExpense) || 0;
+                appState.baseFoodPayerId = found.baseFoodPayerId || '';
+                appState.baseStayExpense = Number(found.baseStayExpense) || 0;
+                appState.baseStayPayerId = found.baseStayPayerId || '';
+                appState.subExpenses = Array.isArray(found.subExpenses) ? found.subExpenses : [];
+                appState.families = Array.isArray(found.families) ? found.families : [];
+                appState.members = Array.isArray(found.members) ? found.members.map(m => ({
+                    ...m,
+                    collapsed: Boolean(m.collapsed)
+                })) : [];
+
+                const toggleEl = document.getElementById('autoFamilySponsorToggle');
+                if (toggleEl) toggleEl.checked = appState.autoFamilySponsorRule;
+
+                const tripInput = document.getElementById('tripNameInput');
+                if (tripInput && (!isRemote || document.activeElement !== tripInput)) {
+                    tripInput.value = appState.tripName;
+                }
+                const foodInput = document.getElementById('baseFoodInput');
+                if (foodInput && (!isRemote || document.activeElement !== foodInput)) {
+                    foodInput.value = appState.baseFoodExpense;
+                }
+                const stayInput = document.getElementById('baseStayInput');
+                if (stayInput && (!isRemote || document.activeElement !== stayInput)) {
+                    stayInput.value = appState.baseStayExpense;
+                }
+                const shareCodeInput = document.getElementById('publicShareCodeDisplay');
+                if (shareCodeInput && (!isRemote || document.activeElement !== shareCodeInput)) {
+                    shareCodeInput.value = roomCode;
+                }
+
+                updateLiveRoomIndicator(roomCode);
+                updateCollapseButtonUI();
+                updateAllViews();
+            } finally {
+                if (isRemote && window.cloudDb) window.cloudDb.isHydrating = false;
+            }
         }
 
         /**************************************************************
@@ -1945,25 +2173,67 @@
         window.onload = async function () {
             const params = new URLSearchParams(window.location.search);
             const roomParam = params.get('room');
-            let loadedFromRoom = false;
+            let loaded = false;
 
-            if (roomParam && window.fetchSharedTripRoom) {
+            if (roomParam) {
+                const targetCode = normalizeRoomCode(roomParam);
                 try {
-                    const found = await window.fetchSharedTripRoom(roomParam);
+                    const found = window.fetchSharedTripRoom ? await window.fetchSharedTripRoom(targetCode, true) : null;
                     if (found) {
-                        applyImportedTripObject(found);
-                        loadedFromRoom = true;
-                        showToast(`เชื่อมต่อห้องทริป ${roomParam.toUpperCase()} แบบ Real-time แล้ว`);
+                        applyImportedTripObject({ ...found, shareRoomCode: targetCode }, { fromRemote: true });
+                        loaded = true;
+                        showToast(`เข้าห้อง ${targetCode} แบบ Real-time แล้ว`);
+                    } else {
+                        // Room code in URL doesn't exist yet -> start a fresh live room with that exact code
+                        window.cloudDb.isHydrating = true;
+                        appState.shareRoomCode = targetCode;
+                        appState.currentTripId = 'room_' + targetCode;
+                        appState.tripName = 'ทริปห้อง ' + targetCode;
+                        document.getElementById('tripNameInput').value = appState.tripName;
+                        appState.members = [];
+                        appState.families = [];
+                        appState.subExpenses = [];
+                        appState.baseFoodExpense = 0;
+                        appState.baseStayExpense = 0;
+                        document.getElementById('baseFoodInput').value = 0;
+                        document.getElementById('baseStayInput').value = 0;
+                        updateAllViews();
+                        window.cloudDb.isHydrating = false;
+
+                        if (window.subscribeToSharedRoom) window.subscribeToSharedRoom(targetCode);
+                        loaded = true;
+                        showToast(`เปิดห้องใหม่ "${targetCode}" พร้อมซิงค์ Real-time แล้ว`);
                     }
                 } catch (e) {
                     console.warn('Room load warning:', e);
                 }
             }
 
-            if (!loadedFromRoom) {
+            if (!loaded) {
                 const loadedFromHash = checkUrlHashForSharedTrip();
-                if (!loadedFromHash) {
+                if (loadedFromHash) {
+                    if (window.subscribeToSharedRoom) window.subscribeToSharedRoom(appState.shareRoomCode);
+                    loaded = true;
+                }
+            }
+
+            if (!loaded) {
+                // Default room TRIP-6152: fetch latest live state from Supabase first so refresh never reverts edits!
+                const defaultCode = 'TRIP-6152';
+                let existingDefault = null;
+                try {
+                    if (window.fetchSharedTripRoom) {
+                        existingDefault = await window.fetchSharedTripRoom(defaultCode, true);
+                    }
+                } catch (e) {}
+
+                if (existingDefault) {
+                    applyImportedTripObject({ ...existingDefault, shareRoomCode: defaultCode }, { fromRemote: true });
+                } else {
+                    window.cloudDb.isHydrating = true;
                     loadDemoData(true);
+                    window.cloudDb.isHydrating = false;
+                    if (window.subscribeToSharedRoom) window.subscribeToSharedRoom(defaultCode);
                 }
             }
 
@@ -2015,17 +2285,19 @@
             appState.tripName = val.trim() || 'ทริปไม่มีชื่อ';
             const badge = document.getElementById('summaryTripNameBadge');
             if (badge) badge.textContent = appState.tripName;
+            triggerAutoSyncToRoom();
         }
 
         function loadDemoData(isInitial = false) {
             if (!isInitial) {
-                // Clear URL hash when user explicitly clicks "ตัวอย่าง" button
-                try {
-                    window.history.replaceState(null, '', window.location.pathname + window.location.search);
-                } catch (e) {}
+                // Keep user's current room code when loading demo data into their active room
+                const activeCode = normalizeRoomCode(appState.shareRoomCode || 'TRIP-6152');
+                appState.shareRoomCode = activeCode;
+                appState.currentTripId = 'room_' + activeCode;
+            } else {
+                appState.shareRoomCode = 'TRIP-6152';
+                appState.currentTripId = 'room_TRIP-6152';
             }
-            appState.currentTripId = 'trip_1793530404096';
-            appState.shareRoomCode = 'TRIP-6152';
             appState.tripName = 'ทริปเขาใหญ่พูลวิลล่า';
             appState.autoFamilySponsorRule = true;
             appState.roleRates = {
@@ -2166,13 +2438,15 @@
             container.innerHTML = list.map(item => {
                 const dateStr = item.updatedAt ? new Date(item.updatedAt).toLocaleString('th-TH') : '';
                 const memberCount = Array.isArray(item.members) ? item.members.length : 0;
-                const isCurrent = item.id === appState.currentTripId;
+                const roomCode = item.shareRoomCode || normalizeRoomCode(item.id);
+                const isCurrent = roomCode === appState.shareRoomCode || item.id === appState.currentTripId;
                 return `
-                    <div class="p-3 rounded-xl border ${isCurrent ? 'border-indigo-400 bg-indigo-50/40' : 'border-slate-200 bg-slate-50/70'} flex items-center justify-between gap-2">
+                    <div class="p-3 rounded-xl border ${isCurrent ? 'border-emerald-400 bg-emerald-50/40' : 'border-slate-200 bg-slate-50/70'} flex items-center justify-between gap-2">
                         <div class="min-w-0">
-                            <div class="font-bold text-slate-800 truncate flex items-center gap-1.5">
+                            <div class="font-bold text-slate-800 truncate flex flex-wrap items-center gap-1.5">
                                 <span>${escapeHtml(item.tripName)}</span>
-                                ${isCurrent ? '<span class="text-[9px] px-1.5 py-0.2 bg-indigo-600 text-white rounded-full">กำลังเปิด</span>' : ''}
+                                <span class="font-mono text-[9px] px-1.5 py-0.2 bg-indigo-100 text-indigo-700 rounded-md">${escapeHtml(roomCode)}</span>
+                                ${isCurrent ? '<span class="text-[9px] px-1.5 py-0.2 bg-emerald-600 text-white rounded-full">LIVE</span>' : ''}
                             </div>
                             <div class="text-[10px] text-slate-500 mt-0.5">
                                 สมาชิก ${memberCount} คน • อัปเดต ${dateStr}
@@ -2788,8 +3062,14 @@
 
             window.addEventListener('pointerup', () => {
                 if (dragState.type === 'card') {
+                    const draggedMember = appState.members.find(m => m.id === dragState.memberId);
+                    const moved = draggedMember && (
+                        Math.abs(draggedMember.x - dragState.initialCardX) > 2 ||
+                        Math.abs(draggedMember.y - dragState.initialCardY) > 2
+                    );
                     dragState.type = null;
                     dragState.memberId = null;
+                    if (moved) triggerAutoSyncToRoom();
                 }
             });
         }
@@ -2983,14 +3263,18 @@
 
         let autoSyncTimer = null;
         function triggerAutoSyncToRoom() {
-            if (!window.cloudDb?.activeRoomChannel || window.cloudDb?.isReceivingRemoteUpdate) return;
+            if (!window.cloudDb || window.cloudDb.isHydrating || window.cloudDb.isReceivingRemoteUpdate) return;
             clearTimeout(autoSyncTimer);
             autoSyncTimer = setTimeout(() => {
+                if (window.cloudDb.isHydrating || window.cloudDb.isReceivingRemoteUpdate) return;
+                const roomCode = normalizeRoomCode(appState.shareRoomCode);
                 const payload = buildCompactSharePayload();
-                if (window.publishSharedTripRoom && appState.shareRoomCode) {
-                    window.publishSharedTripRoom(appState.shareRoomCode, payload).catch(console.warn);
+                if (window.syncRoomToCloud) {
+                    window.syncRoomToCloud(roomCode, payload).catch(err => {
+                        console.warn('Auto-sync warning:', err);
+                    });
                 }
-            }, 1000);
+            }, 450);
         }
 
         /**
